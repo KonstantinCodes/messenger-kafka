@@ -1,4 +1,4 @@
 services:
     koco.kafka.factory:
-        class: 'Koco\Kafka\KafkaTransportFactory'
+        class: 'Koco\Kafka\Messenger\KafkaTransportFactory'
         tags: ['messenger.transport_factory']

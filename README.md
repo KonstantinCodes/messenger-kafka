@@ -1,5 +1,7 @@
 # Symfony Messenger Kafka Transport
 
+![License](https://img.shields.io/packagist/l/koco/messenger-kafka.svg)
+
 !! This is experimental. Don't use in production. !!
 
 At the moment, this Transport can only consume messages.

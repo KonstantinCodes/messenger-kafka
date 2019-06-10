@@ -2,7 +2,7 @@
 
 !! This is experimental. !!
 
-This bundle aims to provide a simple Kafka transport.
+This bundle aims to provide a simple Kafka transport for Symfony Messenger.
 
 ## Installation
 
@@ -41,4 +41,36 @@ return [
     // ...
     Koco\Kafka\KocoKafkaBundle::class => ['all' => true],
 ];
+```
+
+## Configuration
+
+### DSN
+Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. There can be multiple brokers separated by `,`
+* `kafka://my-local-kafka:9092`
+* `kafka+ssl://my-staging-kafka:9093`
+* `kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093`
+
+### Example
+```
+framework:
+    messenger:
+        transports:
+            events:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    commitAsync: true
+                    receiveTimeout: 10000
+                    topic:
+                        name: "events"
+                    kafka_conf:
+                        group.id: 'backend-dev'
+                        security.protocol: 'sasl_ssl'
+                        ssl.ca.location: '%kernel.project_dir%/config/kafka/ca.pem'
+                        sasl.username: '%env(KAFKA_SASL_USERNAME)%'
+                        sasl.password: '%env(KAFKA_SASL_PASSWORD)%'
+                        sasl.mechanisms: 'SCRAM-SHA-256'
+                        max.poll.interval.ms: '45000'
+                    topic_conf:
+                        auto.offset.reset: 'smallest'
 ```

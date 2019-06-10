@@ -55,7 +55,7 @@ class KafkaTransport implements TransportInterface
 
         $consumer->subscribe([$this->topicName]);
 
-        $this->logger->info('Waiting for partition assignment... (make take some time when quickly re-joining the group after leaving it.)');
+        $this->logger->info('Partition assignment...');
 
         while (true) {
             $message = $consumer->consume($this->timeoutMs);
@@ -76,10 +76,10 @@ class KafkaTransport implements TransportInterface
 
                     break;
                 case RD_KAFKA_RESP_ERR__PARTITION_EOF:
-                    $this->logger->info('No more messages; will wait for more');
+                    $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
                     break;
                 case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                    $this->logger->debug('Kafka: Consumer timeout reached.');
+                    $this->logger->debug('Kafka: Consumer timeout.');
                     break;
                 default:
                     throw new \Exception($message->errstr(), $message->err);

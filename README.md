@@ -1,6 +1,8 @@
 # Symfony Messenger Kafka Transport
 
-!! This is experimental. !!
+!! This is experimental. Don't use in production. !!
+
+At the moment, this Transport can only consume messages.
 
 This bundle aims to provide a simple Kafka transport for Symfony Messenger.
 

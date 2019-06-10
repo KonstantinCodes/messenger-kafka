@@ -1,4 +1,6 @@
 services:
     koco.kafka.factory:
         class: 'Koco\Kafka\Messenger\KafkaTransportFactory'
+        arguments:
+            - '@Psr\Log\LoggerInterface'
         tags: ['messenger.transport_factory']

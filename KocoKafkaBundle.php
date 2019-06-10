@@ -1,6 +1,6 @@
 <?php
 
-namespace Koco\Kafka\Bundle;
+namespace Koco\Kafka;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

@@ -77,13 +77,13 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
 
-        foreach($options['kafka_conf'] as $option => $value) {
+        foreach($options['kafka_conf'] ?? [] as $option => $value) {
             $conf->set($option, $value);
         }
 
         $topicConf = new KafkaTopicConf();
 
-        foreach($options['topic_conf'] as $option => $value) {
+        foreach($options['topic_conf'] ?? [] as $option => $value) {
             $conf->set($option, $value);
         }
 

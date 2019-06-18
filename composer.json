@@ -2,7 +2,7 @@
   "name": "koco/messenger-kafka",
   "type": "symfony-bundle",
   "description": "Symfony Messenger Kafka Transport",
-  "keywords": ["messaging", "queue", "kafka"],
+  "keywords": ["kafka", "symfony", "messenger", "transport", "queue", "bundle"],
   "license": "MIT",
   "require": {
     "php": "^7.1.3",

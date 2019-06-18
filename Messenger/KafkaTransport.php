@@ -2,10 +2,11 @@
 
 namespace Koco\Kafka\Messenger;
 
-use Exception;
 use Psr\Log\LoggerInterface;
+use const RD_KAFKA_PARTITION_UA;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
+use RdKafka\Producer as KafkaProducer;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
@@ -23,6 +24,9 @@ class KafkaTransport implements TransportInterface
 
     /** @var KafkaConsumer */
     private $consumer;
+
+    /** @var KafkaProducer */
+    private $producer;
 
     /** @var string */
     private $topicName;
@@ -107,7 +111,7 @@ class KafkaTransport implements TransportInterface
 
     public function reject(Envelope $envelope): void
     {
-        throw new Exception('Kafka reject');
+        // Do nothing. auto commit should be set to false!
     }
 
     /**
@@ -120,7 +124,14 @@ class KafkaTransport implements TransportInterface
      */
     public function send(Envelope $envelope): Envelope
     {
-        throw new Exception('Kafka send');
+        $producer = $this->getProducer();
+        $topic = $producer->newTopic($this->topicName);
+
+        $payload = $this->serializer->toString($envelope);
+
+        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
+
+        return $envelope;
     }
 
     private function getConsumer(): KafkaConsumer
@@ -132,5 +143,16 @@ class KafkaTransport implements TransportInterface
         $this->consumer = new KafkaConsumer($this->kafkaConf);
 
         return $this->consumer;
+    }
+
+    private function getProducer(): KafkaProducer
+    {
+        if($this->producer) {
+            return $this->producer;
+        }
+
+        $this->producer = new KafkaProducer($this->kafkaConf);
+
+        return $this->producer;
     }
 }

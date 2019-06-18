@@ -129,7 +129,7 @@ class KafkaTransport implements TransportInterface
 
         $payload = $this->serializer->encode($envelope);
 
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
+        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload['body']);
 
         return $envelope;
     }

@@ -1,10 +1,8 @@
 # Symfony Messenger Kafka Transport
 
-[![License](https://img.shields.io/packagist/l/koco/messenger-kafka.svg)](LICENSE)
+[![License](https://img.shields.io/github/license/KonstantinCodes/messenger-kafka.svg)](LICENSE)
 
-!! This is experimental. Don't use in production. !!
-
-At the moment, this Transport can only consume messages.
+!! This is experimental. Please evaluate the code, if it suits you. !!
 
 This bundle aims to provide a simple Kafka transport for Symfony Messenger.
 
@@ -56,11 +54,26 @@ Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. There can be m
 * `kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093`
 
 ### Example
+The configuration options for `kafka_conf` and `topic_conf` can be found [here](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
+It is highly recommended to set `enable.auto.offset.store` to `false` for consumers. Otherwise every message is acknoledged, regardless of any error thrown by the message handlers.
+
+
 ```
 framework:
     messenger:
         transports:
-            events:
+            producer:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    topic:
+                        name: 'events'
+                    kafka_conf:
+                        security.protocol: 'sasl_ssl'
+                        ssl.ca.location: '%kernel.project_dir%/config/kafka/ca.pem'
+                        sasl.username: '%env(KAFKA_SASL_USERNAME)%'
+                        sasl.password: '%env(KAFKA_SASL_PASSWORD)%'
+                        sasl.mechanisms: 'SCRAM-SHA-256'
+            consumer:
                 dsn: '%env(KAFKA_URL)%'
                 options:
                     commitAsync: true
@@ -68,7 +81,8 @@ framework:
                     topic:
                         name: "events"
                     kafka_conf:
-                        group.id: 'backend-dev'
+                        enable.auto.offset.store: 'false'
+                        group.id: 'my-group-id' # should be unique per consumer
                         security.protocol: 'sasl_ssl'
                         ssl.ca.location: '%kernel.project_dir%/config/kafka/ca.pem'
                         sasl.username: '%env(KAFKA_SASL_USERNAME)%'

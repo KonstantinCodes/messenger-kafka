@@ -2,6 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
+use function json_encode;
 use Psr\Log\LoggerInterface;
 use const RD_KAFKA_PARTITION_UA;
 use RdKafka\Conf as KafkaConf;
@@ -129,7 +130,7 @@ class KafkaTransport implements TransportInterface
 
         $payload = $this->serializer->encode($envelope);
 
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload['body']);
+        $topic->produce(RD_KAFKA_PARTITION_UA, 0, json_encode($payload));
 
         return $envelope;
     }

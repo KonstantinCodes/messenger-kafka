@@ -1,6 +1,7 @@
 # Symfony Messenger Kafka Transport
 
 [![License](https://img.shields.io/github/license/KonstantinCodes/messenger-kafka.svg)](LICENSE)
+![PHP from Packagist](https://img.shields.io/packagist/php-v/koco/messenger-kafka.svg)
 
 !! This is experimental. Please evaluate the code, if it suits you. !!
 

@@ -127,7 +127,7 @@ class KafkaTransport implements TransportInterface
         $producer = $this->getProducer();
         $topic = $producer->newTopic($this->topicName);
 
-        $payload = $this->serializer->toString($envelope);
+        $payload = $this->serializer->encode($envelope);
 
         $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload);
 

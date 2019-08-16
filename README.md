@@ -4,8 +4,6 @@
 [![Packagist](https://img.shields.io/packagist/dt/koco/messenger-kafka.svg)](https://packagist.org/packages/koco/messenger-kafka)
 ![PHP from Packagist](https://img.shields.io/packagist/php-v/koco/messenger-kafka.svg)
 
-!! This is experimental. Please evaluate the code, if it suits you. !!
-
 This bundle aims to provide a simple Kafka transport for Symfony Messenger.
 
 ## Installation

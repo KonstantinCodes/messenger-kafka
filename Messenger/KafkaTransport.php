@@ -62,35 +62,35 @@ class KafkaTransport implements TransportInterface
 
         $this->logger->info('Partition assignment...');
 
-        while (true) {
-            $message = $consumer->consume($this->timeoutMs);
-            switch ($message->err) {
-                case RD_KAFKA_RESP_ERR_NO_ERROR:
-                    $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
+        $message = $consumer->consume($this->timeoutMs);
+        switch ($message->err) {
+            case RD_KAFKA_RESP_ERR_NO_ERROR:
+                $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
 
-                    /** @var Envelope $envelope */
-                    $envelope = $this->serializer->decode(array(
-                        'body' => json_decode($message->payload, true)['body']
-                    ));
+                /** @var Envelope $envelope */
+                $envelope = $this->serializer->decode(array(
+                    'body' => json_decode($message->payload, true)['body']
+                ));
 
-                    if ($envelope) {
-                        $envelope = $envelope->with(new KafkaMessageStamp($message));
-                    }
+                if ($envelope) {
+                    $envelope = $envelope->with(new KafkaMessageStamp($message));
+                }
 
-                    return array($envelope);
+                return array($envelope);
 
-                    break;
-                case RD_KAFKA_RESP_ERR__PARTITION_EOF:
-                    $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
-                    break;
-                case RD_KAFKA_RESP_ERR__TIMED_OUT:
-                    $this->logger->debug('Kafka: Consumer timeout.');
-                    break;
-                default:
-                    throw new \Exception($message->errstr(), $message->err);
-                    break;
-            }
+                break;
+            case RD_KAFKA_RESP_ERR__PARTITION_EOF:
+                $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
+                break;
+            case RD_KAFKA_RESP_ERR__TIMED_OUT:
+                $this->logger->debug('Kafka: Consumer timeout.');
+                break;
+            default:
+                throw new \Exception($message->errstr(), $message->err);
+                break;
         }
+
+        return [];
     }
 
     public function ack(Envelope $envelope): void

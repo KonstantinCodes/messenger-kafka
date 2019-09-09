@@ -55,7 +55,7 @@ Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. There can be m
 
 ### Example
 The configuration options for `kafka_conf` and `topic_conf` can be found [here](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
-It is highly recommended to set `enable.auto.offset.store` to `false` for consumers. Otherwise every message is acknoledged, regardless of any error thrown by the message handlers.
+It is highly recommended to set `enable.auto.offset.store` to `false` for consumers. Otherwise every message is acknowledged, regardless of any error thrown by the message handlers.
 
 
 ```

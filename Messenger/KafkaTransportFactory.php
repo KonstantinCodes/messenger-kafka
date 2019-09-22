@@ -84,7 +84,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $topicConf = new KafkaTopicConf();
 
         foreach($options['topic_conf'] ?? [] as $option => $value) {
-            $conf->set($option, $value);
+            $topicConf->set($option, $value);
         }
 
         // Set the configuration to use for subscribed/assigned topics

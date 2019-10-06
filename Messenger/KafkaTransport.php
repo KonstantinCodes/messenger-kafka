@@ -38,6 +38,9 @@ class KafkaTransport implements TransportInterface
     /** @var bool */
     private $commitAsync;
 
+    /** @var bool */
+    private $subscribed;
+
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
@@ -52,15 +55,19 @@ class KafkaTransport implements TransportInterface
         $this->topicName = $topicName;
         $this->timeoutMs = $timeoutMs;
         $this->commitAsync = $commitAsync;
+        $this->subscribed = false;
     }
 
     public function get(): iterable
     {
         $consumer = $this->getConsumer();
 
-        $consumer->subscribe([$this->topicName]);
+        if (false === $this->subscribed) {
+            $consumer->subscribe([$this->topicName]);
+            $this->logger->info('Partition assignment...');
 
-        $this->logger->info('Partition assignment...');
+            $this->subscribed = true;
+        }
 
         $message = $consumer->consume($this->timeoutMs);
         switch ($message->err) {

@@ -13,6 +13,9 @@
     "symfony/http-kernel": "^3.0||^4.0",
     "symfony/messenger": "^4.3"
   },
+  "require-dev": {
+    "kwn/php-rdkafka-stubs": "^2.0"
+  },
   "autoload": {
     "psr-4": { "Koco\\Kafka\\": "" }
   }

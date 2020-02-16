@@ -74,9 +74,12 @@ class KafkaTransport implements TransportInterface
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
 
+                $decodedMessage = json_decode($message->payload, true);
+
                 /** @var Envelope $envelope */
                 $envelope = $this->serializer->decode(array(
-                    'body' => json_decode($message->payload, true)['body']
+                    'body' => $decodedMessage['body'],
+                    'headers' => $decodedMessage['headers']
                 ));
 
                 if ($envelope) {

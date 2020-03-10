@@ -95,6 +95,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $serializer,
             $conf,
             $options['topic']['name'],
+            $options['flushTimeout'] ?? 10000,
             $options['receiveTimeout'] ?? 10000,
             $options['commitAsync'] ?? false
         );

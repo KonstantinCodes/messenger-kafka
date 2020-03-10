@@ -15,5 +15,8 @@
   },
   "autoload": {
     "psr-4": { "Koco\\Kafka\\": "" }
+  },
+  "require-dev": {
+    "kwn/php-rdkafka-stubs": "^2.0"
   }
 }

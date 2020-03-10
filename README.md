@@ -65,6 +65,7 @@ framework:
             producer:
                 dsn: '%env(KAFKA_URL)%'
                 options:
+                    flushTimeout: 10000
                     topic:
                         name: 'events'
                     kafka_conf:

@@ -40,12 +40,14 @@ class KafkaTransport implements TransportInterface
 
     /** @var bool */
     private $subscribed;
+    private $flushTimeout;
 
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
         KafkaConf $kafkaConf,
         string $topicName,
+        int $flushTimeout,
         int $timeoutMs,
         bool $commitAsync
     ) {
@@ -56,6 +58,7 @@ class KafkaTransport implements TransportInterface
         $this->timeoutMs = $timeoutMs;
         $this->commitAsync = $commitAsync;
         $this->subscribed = false;
+        $this->flushTimeout = $flushTimeout;
     }
 
     public function get(): iterable
@@ -141,6 +144,8 @@ class KafkaTransport implements TransportInterface
         $payload = $this->serializer->encode($envelope);
 
         $topic->produce(RD_KAFKA_PARTITION_UA, 0, json_encode($payload));
+
+        $producer->flush($this->flushTimeout);
 
         return $envelope;
     }

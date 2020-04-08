@@ -11,12 +11,16 @@
     "symfony/config": "^3.0||^4.0||^5.0",
     "symfony/dependency-injection": "^3.0||^4.0|^5.0",
     "symfony/http-kernel": "^3.0||^4.0||^5.0",
-    "symfony/messenger": "^4.3||^5.0"
+    "symfony/messenger": "^4.4||^5.0"
   },
   "autoload": {
-    "psr-4": { "Koco\\Kafka\\": "" }
+    "psr-4": { "Koco\\Kafka\\": "" },
+    "exclude-from-classmap": [
+      "/Tests/"
+    ]
   },
   "require-dev": {
-    "kwn/php-rdkafka-stubs": "^2.0"
+    "kwn/php-rdkafka-stubs": "^2.0",
+    "symfony/phpunit-bridge": "^5.0"
   }
 }

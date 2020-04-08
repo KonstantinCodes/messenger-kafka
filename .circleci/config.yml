@@ -1,21 +1,28 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/kafka-php
+    working_directory: ~/messenger-kafka
     docker:
       - image: circleci/php:7.4.4
       - image: lensesio/fast-data-dev:2.3
 
     steps:
-      # Dependencies
       - checkout
+
+      - run: sudo apt update # PHP CircleCI 2.0 Configuration File# PHP CircleCI 2.0 Configuration File sudo apt install zlib1g-dev libsqlite3-dev
+      - run: sudo docker-php-ext-install zip
+
+      # Download and cache dependencies
       - restore_cache:
-          key: messenger-kafka-{{ .Branch }}-{{ checksum "./composer.lock" }}-v1
-      - run: composer install --prefer-dist --no-interaction
-      # Force pulling Simple PHPUnit dependencies to be able to cache them as well
-      - run: ./vendor/bin/simple-phpunit --version
+          keys:
+            # "composer.lock" can be used if it is committed to the repo
+            - v1-dependencies-{{ checksum "composer.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run: composer install -n --prefer-dist
+
       - save_cache:
-          key: messenger-kafka-{{ .Branch }}-{{ checksum "./composer.lock" }}-v1
+          key: v1-dependencies-{{ checksum "composer.lock" }}
           paths:
-            - '/root/.composer/cache'
-            - './vendor'
+            - ./vendor

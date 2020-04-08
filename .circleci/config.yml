@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/kafka-php
+    docker:
+      - image: circleci/php:7.4.4
+      - image: lensesio/fast-data-dev:2.3
+
+    steps:
+      # Dependencies
+      - checkout
+      - restore_cache:
+          key: messenger-kafka-{{ .Branch }}-{{ checksum "./composer.lock" }}-v1
+      - run: composer install --prefer-dist --no-interaction
+      # Force pulling Simple PHPUnit dependencies to be able to cache them as well
+      - run: ./vendor/bin/simple-phpunit --version
+      - save_cache:
+          key: messenger-kafka-{{ .Branch }}-{{ checksum "./composer.lock" }}-v1
+          paths:
+            - '/root/.composer/cache'
+            - './vendor'

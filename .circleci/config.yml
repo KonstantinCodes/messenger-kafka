@@ -22,7 +22,14 @@ jobs:
 
       - run: composer install -n --prefer-dist
 
+      # Pull Simple PHPUnit dependencies
+      - run: ./vendor/bin/simple-phpunit --version
+
       - save_cache:
           key: v1-dependencies-{{ checksum "composer.lock" }}
           paths:
             - ./vendor
+
+
+      # Test
+      - run: ./vendor/bin/simple-phpunit

@@ -32,6 +32,10 @@ class KafkaTransportFactoryTest extends TestCase
         $this->assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
     }
 
+    /**
+     * @group legacy
+     * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
+     */
     public function testCreateTransport()
     {
         $transport = $this->factory->createTransport(

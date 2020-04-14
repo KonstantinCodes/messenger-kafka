@@ -93,6 +93,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
         return new KafkaTransport(
             $this->logger,
             $serializer,
+            $options['decoder'] ?? new KafkaMessageJsonDecoder(),
             $conf,
             $options['topic']['name'],
             $options['flushTimeout'] ?? 10000,

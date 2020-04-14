@@ -19,6 +19,9 @@
       "/Tests/"
     ]
   },
+  "autoload-dev": {
+    "psr-4": { "Koco\\Kafka\\Tests": "Tests/" }
+  },
   "require-dev": {
     "kwn/php-rdkafka-stubs": "^2.0",
     "symfony/phpunit-bridge": "^5.0"

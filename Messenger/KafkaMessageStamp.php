@@ -3,9 +3,9 @@
 namespace Koco\Kafka\Messenger;
 
 use \RdKafka\Message;
-use Symfony\Component\Messenger\Stamp\StampInterface;
+use Symfony\Component\Messenger\Stamp\NonSendableStampInterface;
 
-final class KafkaMessageStamp implements StampInterface
+final class KafkaMessageStamp implements NonSendableStampInterface
 {
     /** @var Message */
     private $message;

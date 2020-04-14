@@ -4,3 +4,5 @@ package.xml
 .idea
 .php_cs.cache
 docs/_build
+composer.lock
+/.phpunit.result.cache

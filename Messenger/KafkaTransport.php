@@ -20,6 +20,9 @@ class KafkaTransport implements TransportInterface
     /** @var SerializerInterface */
     private $serializer;
 
+    /** @var KafkaMessageDecoderInterface */
+    private $decoder;
+
     /** @var KafkaConf */
     private $kafkaConf;
 
@@ -40,11 +43,14 @@ class KafkaTransport implements TransportInterface
 
     /** @var bool */
     private $subscribed;
+
+    /** @var int */
     private $flushTimeout;
 
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
+        KafkaMessageDecoderInterface $decoder,
         KafkaConf $kafkaConf,
         string $topicName,
         int $flushTimeout,
@@ -53,6 +59,7 @@ class KafkaTransport implements TransportInterface
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
+        $this->decoder = $decoder;
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
         $this->timeoutMs = $timeoutMs;
@@ -77,17 +84,12 @@ class KafkaTransport implements TransportInterface
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
 
-                $decodedMessage = json_decode($message->payload, true);
+                $decodedMessage = $this->decoder->decode($message);
 
                 /** @var Envelope $envelope */
-                $envelope = $this->serializer->decode(array(
-                    'body' => $decodedMessage['body'],
-                    'headers' => $decodedMessage['headers']
-                ));
+                $envelope = $this->serializer->decode($decodedMessage);
 
-                if ($envelope) {
-                    $envelope = $envelope->with(new KafkaMessageStamp($message));
-                }
+                $envelope = $envelope->with(new KafkaMessageStamp($message));
 
                 return array($envelope);
 

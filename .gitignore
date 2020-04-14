@@ -6,3 +6,4 @@ package.xml
 docs/_build
 composer.lock
 /.phpunit.result.cache
+/var

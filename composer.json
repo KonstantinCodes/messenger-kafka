@@ -20,7 +20,7 @@
     ]
   },
   "autoload-dev": {
-    "psr-4": { "Koco\\Kafka\\Tests": "Tests/" }
+    "psr-4": { "Koco\\Kafka\\Tests\\": "Tests/" }
   },
   "require-dev": {
     "kwn/php-rdkafka-stubs": "^2.0",

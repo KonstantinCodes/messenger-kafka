@@ -2,6 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\RdKafka\RdKafkaFactory;
 use function json_encode;
 use Psr\Log\LoggerInterface;
 use const RD_KAFKA_PARTITION_UA;
@@ -22,6 +23,9 @@ class KafkaTransport implements TransportInterface
 
     /** @var KafkaMessageDecoderInterface */
     private $decoder;
+
+    /** @var RdKafkaFactory */
+    private $rdKafkaFactory;
 
     /** @var KafkaConf */
     private $kafkaConf;
@@ -51,6 +55,7 @@ class KafkaTransport implements TransportInterface
         LoggerInterface $logger,
         SerializerInterface $serializer,
         KafkaMessageDecoderInterface $decoder,
+        RdKafkaFactory $rdKafkaFactory,
         KafkaConf $kafkaConf,
         string $topicName,
         int $flushTimeout,
@@ -60,6 +65,7 @@ class KafkaTransport implements TransportInterface
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->decoder = $decoder;
+        $this->rdKafkaFactory = $rdKafkaFactory;
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
         $this->timeoutMs = $timeoutMs;
@@ -158,7 +164,7 @@ class KafkaTransport implements TransportInterface
             return $this->consumer;
         }
 
-        $this->consumer = new KafkaConsumer($this->kafkaConf);
+        $this->consumer = $this->rdKafkaFactory->createConsumer($this->kafkaConf);
 
         return $this->consumer;
     }
@@ -169,7 +175,7 @@ class KafkaTransport implements TransportInterface
             return $this->producer;
         }
 
-        $this->producer = new KafkaProducer($this->kafkaConf);
+        $this->producer = $this->rdKafkaFactory->createProducer($this->kafkaConf);
 
         return $this->producer;
     }

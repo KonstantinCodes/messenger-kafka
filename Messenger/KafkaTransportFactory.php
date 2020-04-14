@@ -2,6 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\RdKafka\RdKafkaFactory;
 use function explode;
 use Psr\Log\LoggerInterface;
 use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
@@ -94,6 +95,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $this->logger,
             $serializer,
             $options['decoder'] ?? new KafkaMessageJsonDecoder(),
+            new RdKafkaFactory(),
             $conf,
             $options['topic']['name'],
             $options['flushTimeout'] ?? 10000,

@@ -76,16 +76,8 @@ class KafkaTransport implements TransportInterface
 
     public function get(): iterable
     {
-        $consumer = $this->getConsumer();
+        $message = $this->getSubscribedConsumer()->consume($this->timeoutMs);
 
-        if (false === $this->subscribed) {
-            $consumer->subscribe([$this->topicName]);
-            $this->logger->info('Partition assignment...');
-
-            $this->subscribed = true;
-        }
-
-        $message = $consumer->consume($this->timeoutMs);
         switch ($message->err) {
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
@@ -112,6 +104,20 @@ class KafkaTransport implements TransportInterface
         }
 
         return [];
+    }
+
+    public function getSubscribedConsumer(): KafkaConsumer
+    {
+        $consumer = $this->getConsumer();
+
+        if (false === $this->subscribed) {
+            $consumer->subscribe([$this->topicName]);
+            $this->logger->info('Partition assignment...');
+
+            $this->subscribed = true;
+        }
+
+        return $consumer;
     }
 
     public function ack(Envelope $envelope): void

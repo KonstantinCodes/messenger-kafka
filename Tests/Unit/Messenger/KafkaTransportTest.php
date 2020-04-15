@@ -2,7 +2,7 @@
 
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
-use Koco\Kafka\Messenger\KafkaMessageDecoderInterface;
+use Koco\Kafka\Messenger\KafkaMessageDecoder;
 use Koco\Kafka\Messenger\KafkaMessageStamp;
 use Koco\Kafka\Messenger\KafkaTransport;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
@@ -25,7 +25,7 @@ class KafkaTransportTest extends TestCase
     /** @var MockObject|SerializerInterface */
     private $mockSerializer;
 
-    /** @var MockObject|KafkaMessageDecoderInterface */
+    /** @var MockObject|KafkaMessageDecoder */
     private $mockDecoder;
 
     /** @var MockObject|KafkaConsumer */
@@ -43,7 +43,7 @@ class KafkaTransportTest extends TestCase
 
         $this->mockSerializer = $this->createMock(SerializerInterface::class);
 
-        $this->mockDecoder = $this->createMock(KafkaMessageDecoderInterface::class);
+        $this->mockDecoder = $this->createMock(KafkaMessageDecoder::class);
 
         // RdKafka
         $this->mockRdKafkaFactory = $this->createMock(RdKafkaFactory::class);

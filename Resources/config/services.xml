@@ -11,7 +11,7 @@
 
         <service id="Koco\Kafka\Messenger\KafkaTransportFactory" class="Koco\Kafka\Messenger\KafkaTransportFactory" public="false">
             <tag name="messenger.transport_factory"/>
-            <argument type="Koco\Kafka\Messenger\KafkaMessageDecoder" />
+            <argument type="service" id="Koco\Kafka\Messenger\KafkaMessageDecoder"/>
             <argument type="service" id="logger"/>
         </service>
     </services>

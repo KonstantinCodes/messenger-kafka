@@ -16,4 +16,12 @@ interface KafkaMessageDecoderInterface
      * @return array
      */
     public function decode(Message $message): array;
+
+    /**
+     * Check, if the given Kafka Message should be decoded by this decoder.
+     *
+     * @param Message $message
+     * @return bool
+     */
+    public function supports(Message $message): bool;
 }

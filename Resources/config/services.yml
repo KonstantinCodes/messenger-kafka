@@ -1,4 +1,0 @@
-services:
-    Koco\Kafka\Messenger\KafkaTransportFactory:
-        autowire: true
-        tags: ['messenger.transport_factory']

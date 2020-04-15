@@ -21,7 +21,7 @@ class KafkaTransport implements TransportInterface
     /** @var SerializerInterface */
     private $serializer;
 
-    /** @var KafkaMessageDecoderInterface */
+    /** @var KafkaMessageDecoder */
     private $decoder;
 
     /** @var RdKafkaFactory */
@@ -54,7 +54,7 @@ class KafkaTransport implements TransportInterface
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
-        KafkaMessageDecoderInterface $decoder,
+        KafkaMessageDecoder $decoder,
         RdKafkaFactory $rdKafkaFactory,
         KafkaConf $kafkaConf,
         string $topicName,

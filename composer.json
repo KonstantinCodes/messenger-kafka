@@ -26,6 +26,8 @@
   "require-dev": {
     "kwn/php-rdkafka-stubs": "^2.0",
     "symfony/phpunit-bridge": "^5.0",
-    "symfony/framework-bundle": "^5.0"
+    "symfony/framework-bundle": "^5.0",
+    "symfony/serializer": "^5.0",
+    "symfony/property-access": "^5.0"
   }
 }

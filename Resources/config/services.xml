@@ -5,9 +5,13 @@
         http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="Koco\Kafka\Messenger\KafkaMessageDecoder" class="Koco\Kafka\Messenger\KafkaMessageDecoder" public="false">
+            <argument type="collection" /> <!-- filled in via a compiler pass -->
+        </service>
+
         <service id="Koco\Kafka\Messenger\KafkaTransportFactory" class="Koco\Kafka\Messenger\KafkaTransportFactory" public="false">
             <tag name="messenger.transport_factory"/>
-            <argument type="collection" /> <!-- filled in via a compiler pass -->
+            <argument type="Koco\Kafka\Messenger\KafkaMessageDecoder" />
             <argument type="service" id="logger"/>
         </service>
     </services>

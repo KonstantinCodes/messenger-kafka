@@ -30,14 +30,14 @@ class KafkaTransportFactory implements TransportFactoryInterface
     /** @var LoggerInterface */
     private $logger;
 
-    /** @var array */
-    private $decoders;
+    /** @var KafkaMessageDecoder */
+    private $decoder;
 
     public function __construct(
-        array $decoders,
+        KafkaMessageDecoder $decoder,
         LoggerInterface $logger
     ) {
-        $this->decoders = $decoders;
+        $this->decoder = $decoder;
         $this->logger = $logger;
     }
 
@@ -96,12 +96,10 @@ class KafkaTransportFactory implements TransportFactoryInterface
         // Set the configuration to use for subscribed/assigned topics
         $conf->setDefaultTopicConf($topicConf);
 
-        $decoder = array_key_exists(0, $this->decoders) ? $this->decoders[0] : new KafkaMessageJsonDecoder();
-
         return new KafkaTransport(
             $this->logger,
             $serializer,
-            $decoder,
+            $this->decoder,
             new RdKafkaFactory(),
             $conf,
             $options['topic']['name'],

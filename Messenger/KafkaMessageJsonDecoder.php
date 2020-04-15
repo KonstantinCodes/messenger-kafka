@@ -18,4 +18,12 @@ class KafkaMessageJsonDecoder implements KafkaMessageDecoderInterface
             'headers' => $decodedMessage['headers']
         ];
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function supports(Message $message): bool
+    {
+        return true;
+    }
 }

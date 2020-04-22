@@ -14,8 +14,7 @@ class KafkaMessageJsonDecoder implements KafkaMessageDecoderInterface
         $decodedMessage = json_decode($message->payload, true);
 
         return [
-            'body' => $decodedMessage['body'],
-            'headers' => $decodedMessage['headers']
+            'body' => $decodedMessage['body']
         ];
     }
 

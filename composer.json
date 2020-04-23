@@ -28,5 +28,8 @@
     "symfony/framework-bundle": "^5.0",
     "symfony/serializer": "^5.0",
     "symfony/property-access": "^5.0"
+  },
+  "suggest": {
+    "kwn/php-rdkafka-stubs": "Provides Stubs for RdKafka, useful for auto completion when writing custom decoders."
   }
 }

@@ -10,6 +10,7 @@ jobs:
         environment:
           SAMPLEDATA: 0
           RUNTESTS: 0
+          FORWARDLOGS: 0
 
     steps:
       - checkout

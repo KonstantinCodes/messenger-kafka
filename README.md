@@ -59,7 +59,7 @@ The configuration options for `kafka_conf` and `topic_conf` can be found [here](
 It is highly recommended to set `enable.auto.offset.store` to `false` for consumers. Otherwise every message is acknowledged, regardless of any error thrown by the message handlers.
 
 
-```
+```yaml
 framework:
     messenger:
         transports:

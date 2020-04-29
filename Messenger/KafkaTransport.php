@@ -157,7 +157,7 @@ class KafkaTransport implements TransportInterface
 
         $payload = $this->serializer->encode($envelope);
 
-        $topic->produce(RD_KAFKA_PARTITION_UA, 0, json_encode($payload));
+        $topic->producev(RD_KAFKA_PARTITION_UA, 0, $payload['body'], null, $payload['headers']);
 
         $producer->flush($this->flushTimeout);
 

@@ -21,9 +21,6 @@ class KafkaTransport implements TransportInterface
     /** @var SerializerInterface */
     private $serializer;
 
-    /** @var KafkaMessageDecoder */
-    private $decoder;
-
     /** @var RdKafkaFactory */
     private $rdKafkaFactory;
 
@@ -54,7 +51,6 @@ class KafkaTransport implements TransportInterface
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
-        KafkaMessageDecoder $decoder,
         RdKafkaFactory $rdKafkaFactory,
         KafkaConf $kafkaConf,
         string $topicName,
@@ -64,7 +60,6 @@ class KafkaTransport implements TransportInterface
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
-        $this->decoder = $decoder;
         $this->rdKafkaFactory = $rdKafkaFactory;
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
@@ -82,10 +77,11 @@ class KafkaTransport implements TransportInterface
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
 
-                $decodedMessage = $this->decoder->decode($message);
-
                 /** @var Envelope $envelope */
-                $envelope = $this->serializer->decode($decodedMessage);
+                $envelope = $this->serializer->decode([
+                    'body' => $message->payload,
+                    'headers' => $message->headers
+                ]);
 
                 $envelope = $envelope->with(new KafkaMessageStamp($message));
 

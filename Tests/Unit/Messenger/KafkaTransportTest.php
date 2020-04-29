@@ -2,7 +2,6 @@
 
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
-use Koco\Kafka\Messenger\KafkaMessageDecoder;
 use Koco\Kafka\Messenger\KafkaMessageStamp;
 use Koco\Kafka\Messenger\KafkaTransport;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
@@ -25,9 +24,6 @@ class KafkaTransportTest extends TestCase
     /** @var MockObject|SerializerInterface */
     private $mockSerializer;
 
-    /** @var MockObject|KafkaMessageDecoder */
-    private $mockDecoder;
-
     /** @var MockObject|KafkaConsumer */
     private $mockRdKafkaConsumer;
 
@@ -42,8 +38,6 @@ class KafkaTransportTest extends TestCase
         $this->mockLogger = $this->createMock(LoggerInterface::class);
 
         $this->mockSerializer = $this->createMock(SerializerInterface::class);
-
-        $this->mockDecoder = $this->createMock(KafkaMessageDecoder::class);
 
         // RdKafka
         $this->mockRdKafkaFactory = $this->createMock(RdKafkaFactory::class);
@@ -64,7 +58,6 @@ class KafkaTransportTest extends TestCase
         $transport = new KafkaTransport(
             $this->mockLogger,
             $this->mockSerializer,
-            $this->mockDecoder,
             new RdKafkaFactory(),
             new KafkaConf(),
             'test',
@@ -86,10 +79,11 @@ class KafkaTransportTest extends TestCase
         $testMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
         $testMessage->topic_name = 'test';
         $testMessage->partition = 0;
-        $testMessage->payload = json_encode([
-            'body' => 'test',
-            'headers' => 'asdf'
-        ]);
+        $testMessage->headers = [
+            'type' => TestMessage::class,
+            'Content-Type' => 'application/json'
+        ];
+        $testMessage->payload = '{"data":null}';
         $testMessage->offset = 0;
         $testMessage->timestamp = 1586861356;
 
@@ -97,20 +91,20 @@ class KafkaTransportTest extends TestCase
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->mockDecoder->expects($this->once())
-            ->method('decode')
-            ->with($testMessage)
-            ->willReturn(['body' => 'test', 'headers' => 'asdf']);
-
         $this->mockSerializer->expects($this->once())
             ->method('decode')
-            ->with(['body' => 'test', 'headers' => 'asdf'])
+            ->with([
+                'body' => '{"data":null}',
+                'headers' => [
+                    'type' => TestMessage::class,
+                    'Content-Type' => 'application/json'
+                ]
+            ])
             ->willReturn(new Envelope(new TestMessage()));
 
         $transport = new KafkaTransport(
             $this->mockLogger,
             $this->mockSerializer,
-            $this->mockDecoder,
             $this->mockRdKafkaFactory,
             new KafkaConf(),
             'test',

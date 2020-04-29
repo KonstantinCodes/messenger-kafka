@@ -7,3 +7,5 @@ docs/_build
 composer.lock
 /.phpunit.result.cache
 /var
+/coverage
+.DS_Store

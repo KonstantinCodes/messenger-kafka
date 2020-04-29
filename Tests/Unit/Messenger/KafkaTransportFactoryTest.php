@@ -2,7 +2,6 @@
 
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
-use Koco\Kafka\Messenger\KafkaMessageDecoder;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,10 +21,7 @@ class KafkaTransportFactoryTest extends TestCase
         /** @var LoggerInterface $logger */
         $logger = $this->createMock(LoggerInterface::class);
 
-        /** @var KafkaMessageDecoder $decoder */
-        $decoder = $this->createMock(KafkaMessageDecoder::class);
-
-        $this->factory = new KafkaTransportFactory($decoder, $logger);
+        $this->factory = new KafkaTransportFactory($logger);
 
         $this->serializerMock = $this->createMock(SerializerInterface::class);
     }

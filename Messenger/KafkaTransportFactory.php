@@ -30,14 +30,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
     /** @var LoggerInterface */
     private $logger;
 
-    /** @var KafkaMessageDecoder */
-    private $decoder;
-
     public function __construct(
-        KafkaMessageDecoder $decoder,
         LoggerInterface $logger
     ) {
-        $this->decoder = $decoder;
         $this->logger = $logger;
     }
 
@@ -99,7 +94,6 @@ class KafkaTransportFactory implements TransportFactoryInterface
         return new KafkaTransport(
             $this->logger,
             $serializer,
-            $this->decoder,
             new RdKafkaFactory(),
             $conf,
             $options['topic']['name'],

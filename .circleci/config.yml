@@ -1,15 +1,18 @@
-version: 2
+version: 2.1
+orbs:
+  wait-for: cobli/wait-for@0.0.2
 jobs:
   build:
     working_directory: ~/messenger-kafka
     docker:
       - image: circleci/php:7.4.4
+      - image: lensesio/fast-data-dev
 
     steps:
       - checkout
 
       - run: sudo apt update # PHP CircleCI 2.0 Configuration File# PHP CircleCI 2.0 Configuration File sudo apt install zlib1g-dev libsqlite3-dev
-      - run: sudo apt install librdkafka1 librdkafka-dev
+      - run: sudo apt install librdkafka1 librdkafka-dev kafkacat netcat
       - run: sudo docker-php-ext-install zip && sudo pecl install rdkafka && sudo docker-php-ext-enable rdkafka
 
       # Download and cache dependencies
@@ -30,6 +33,8 @@ jobs:
           paths:
             - ./vendor
 
+      # Wait for the Kafka container
+      - wait-for/kafka
 
       # Test
       - run: ./vendor/bin/simple-phpunit

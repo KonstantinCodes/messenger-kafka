@@ -8,6 +8,7 @@ jobs:
       - image: circleci/php:7.4.4
       - image: lensesio/fast-data-dev
         environment:
+          SAMPLEDATA: 0
           RUNTESTS: 0
 
     steps:

@@ -3,7 +3,6 @@
 namespace Koco\Kafka\Tests\Functional;
 
 use Koco\Kafka\Messenger\KafkaTransportFactory;
-use Koco\Kafka\Tests\Unit\Messenger\TestMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -51,7 +50,7 @@ class KafkaTransportTest extends TestCase
             $serializer
         );
 
-        $envelope = Envelope::wrap(new TestMessage(), []);
+        $envelope = Envelope::wrap(new TestMessage('my_test_data'), []);
 
         $sender->send($envelope);
 
@@ -90,7 +89,7 @@ class KafkaTransportTest extends TestCase
         return function(array $encodedEnvelope) use ($serializer) {
             $this->assertIsArray($encodedEnvelope);
 
-            $this->assertEquals('{"data":null}', $encodedEnvelope['body']);
+            $this->assertEquals('{"data":"my_test_data"}', $encodedEnvelope['body']);
 
             $this->assertArrayHasKey('headers', $encodedEnvelope);
             $headers = $encodedEnvelope['headers'];

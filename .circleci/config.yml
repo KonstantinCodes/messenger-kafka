@@ -42,4 +42,10 @@ jobs:
       - wait-for/kafka
 
       # Test
-      - run: ./vendor/bin/simple-phpunit
+      - run: mkdir results && mkdir results/tests && ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report
+
+      - store_test_results:
+          path: ~/messenger-kafka/results/
+
+      - store_artifacts:
+          path:  ~/messenger-kafka/results/coverage-report

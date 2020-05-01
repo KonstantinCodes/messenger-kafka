@@ -23,6 +23,7 @@
     "psr-4": { "Koco\\Kafka\\Tests\\": "Tests/" }
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.16",
     "kwn/php-rdkafka-stubs": "^2.0",
     "symfony/phpunit-bridge": "^5.0",
     "symfony/framework-bundle": "^5.0",

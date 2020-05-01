@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+
+$finder = Finder::create()->in(__DIR__)->exclude(['vendor'])->append([__FILE__]);
+
+$config = Config::create()
+    ->setRiskyAllowed(true)
+    ->setUsingCache(true)
+    ->setCacheFile(__DIR__ . '/.php_cs.cache')
+    ->setRules([
+        '@Symfony' => true,
+        '@PHP71Migration' => true,
+        'array_indentation' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'concat_space' => ['spacing' => 'one'],
+        'ordered_imports' => ['imports_order' => ['class', 'function', 'const']],
+        'visibility_required' => ['elements' => ['property', 'method', 'const']],
+    ])
+    ->setFinder($finder);
+
+return $config;

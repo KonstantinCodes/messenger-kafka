@@ -75,13 +75,13 @@ class KafkaTransportTest extends TestCase
             ->method('subscribe')
             ->willReturn(true);
 
-        $testMessage = new Message;
+        $testMessage = new Message();
         $testMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
         $testMessage->topic_name = 'test';
         $testMessage->partition = 0;
         $testMessage->headers = [
             'type' => TestMessage::class,
-            'Content-Type' => 'application/json'
+            'Content-Type' => 'application/json',
         ];
         $testMessage->payload = '{"data":null}';
         $testMessage->offset = 0;
@@ -97,8 +97,8 @@ class KafkaTransportTest extends TestCase
                 'body' => '{"data":null}',
                 'headers' => [
                     'type' => TestMessage::class,
-                    'Content-Type' => 'application/json'
-                ]
+                    'Content-Type' => 'application/json',
+                ],
             ])
             ->willReturn(new Envelope(new TestMessage()));
 

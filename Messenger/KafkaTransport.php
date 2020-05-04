@@ -36,7 +36,7 @@ class KafkaTransport implements TransportInterface
     private $topicName;
 
     /** @var int */
-    private $timeoutMs;
+    private $receiveTimeoutMs;
 
     /** @var bool */
     private $commitAsync;
@@ -45,7 +45,7 @@ class KafkaTransport implements TransportInterface
     private $subscribed;
 
     /** @var int */
-    private $flushTimeout;
+    private $flushTimeoutMs;
 
     public function __construct(
         LoggerInterface $logger,
@@ -53,8 +53,8 @@ class KafkaTransport implements TransportInterface
         RdKafkaFactory $rdKafkaFactory,
         KafkaConf $kafkaConf,
         string $topicName,
-        int $flushTimeout,
-        int $timeoutMs,
+        int $flushTimeoutMs,
+        int $receiveTimeoutMs,
         bool $commitAsync
     ) {
         $this->logger = $logger;
@@ -62,15 +62,16 @@ class KafkaTransport implements TransportInterface
         $this->rdKafkaFactory = $rdKafkaFactory;
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
-        $this->timeoutMs = $timeoutMs;
+        $this->flushTimeoutMs = $flushTimeoutMs;
+        $this->receiveTimeoutMs = $receiveTimeoutMs;
         $this->commitAsync = $commitAsync;
+
         $this->subscribed = false;
-        $this->flushTimeout = $flushTimeout;
     }
 
     public function get(): iterable
     {
-        $message = $this->getSubscribedConsumer()->consume($this->timeoutMs);
+        $message = $this->getSubscribedConsumer()->consume($this->receiveTimeoutMs);
 
         switch ($message->err) {
             case RD_KAFKA_RESP_ERR_NO_ERROR:
@@ -154,7 +155,7 @@ class KafkaTransport implements TransportInterface
 
         $topic->producev(RD_KAFKA_PARTITION_UA, 0, $payload['body'], null, $payload['headers']);
 
-        $producer->flush($this->flushTimeout);
+        $producer->flush($this->flushTimeoutMs);
 
         return $envelope;
     }

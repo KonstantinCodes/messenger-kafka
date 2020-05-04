@@ -36,6 +36,9 @@ class KafkaTransport implements TransportInterface
     private $topicName;
 
     /** @var int */
+    private $flushTimeoutMs;
+
+    /** @var int */
     private $receiveTimeoutMs;
 
     /** @var bool */
@@ -43,9 +46,6 @@ class KafkaTransport implements TransportInterface
 
     /** @var bool */
     private $subscribed;
-
-    /** @var int */
-    private $flushTimeoutMs;
 
     public function __construct(
         LoggerInterface $logger,
@@ -138,14 +138,6 @@ class KafkaTransport implements TransportInterface
         // Do nothing. auto commit should be set to false!
     }
 
-    /**
-     * Sends the given envelope.
-     *
-     * The sender can read different stamps for transport configuration,
-     * like delivery delay.
-     *
-     * If applicable, the returned Envelope should contain a TransportMessageIdStamp.
-     */
     public function send(Envelope $envelope): Envelope
     {
         $producer = $this->getProducer();

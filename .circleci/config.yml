@@ -3,6 +3,8 @@ orbs:
   wait-for: cobli/wait-for@0.0.2
 jobs:
   build:
+    environment:
+      CC_TEST_REPORTER_ID: ac6b0ffb95381a6e67239f27805263c12cdb85bc1b8f3bc295173a8cb12ae2b1
     working_directory: ~/messenger-kafka
     docker:
       - image: circleci/php:7.4.4
@@ -39,11 +41,24 @@ jobs:
             - ./vendor
             - ./vendor/bin/.phpunit/phpunit-8.3-0/vendor
 
+      - run:
+          name: Setup Code Climate test-reporter
+          command: |
+            # download test reporter as a static binary
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+
       # Wait for the Kafka container
       - wait-for/kafka
 
       # Test
-      - run: mkdir results && mkdir results/tests && ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report
+      - run:
+          name: PHPUnit
+          command: |
+            mkdir results && mkdir results/tests
+            ./cc-test-reporter before-build
+            ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
+            ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
 
       - store_test_results:
           path: ~/messenger-kafka/results/

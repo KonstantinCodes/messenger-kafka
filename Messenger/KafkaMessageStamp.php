@@ -2,7 +2,7 @@
 
 namespace Koco\Kafka\Messenger;
 
-use \RdKafka\Message;
+use RdKafka\Message;
 use Symfony\Component\Messenger\Stamp\NonSendableStampInterface;
 
 final class KafkaMessageStamp implements NonSendableStampInterface

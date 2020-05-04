@@ -3,26 +3,26 @@
 namespace Koco\Kafka\Messenger;
 
 use Koco\Kafka\RdKafka\RdKafkaFactory;
-use function explode;
 use Psr\Log\LoggerInterface;
-use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
-use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\TopicConf as KafkaTopicConf;
 use RdKafka\TopicPartition;
-use function sprintf;
-use function str_replace;
-use function strpos;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
+use function explode;
+use function sprintf;
+use function str_replace;
+use function strpos;
+use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
+use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 
 class KafkaTransportFactory implements TransportFactoryInterface
 {
     private const DSN_PROTOCOLS = [
         self::DSN_PROTOCOL_KAFKA,
-        self::DSN_PROTOCOL_KAFKA_SSL
+        self::DSN_PROTOCOL_KAFKA_SSL,
     ];
     private const DSN_PROTOCOL_KAFKA = 'kafka://';
     private const DSN_PROTOCOL_KAFKA_SSL = 'kafka+ssl://';
@@ -43,6 +43,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
                 return true;
             }
         }
+
         return false;
     }
 
@@ -52,7 +53,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $logger = $this->logger;
 
         // Set a rebalance callback to log partition assignments (optional)
-        $conf->setRebalanceCb(function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger){
+        $conf->setRebalanceCb(function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
             switch ($err) {
                 case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
                     /** @var TopicPartition $topicPartition */
@@ -67,7 +68,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
                     foreach ($topicPartitions as $topicPartition) {
                         $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
-                    $kafka->assign(NULL);
+                    $kafka->assign(null);
                     break;
 
                 default:
@@ -78,13 +79,13 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
 
-        foreach($options['kafka_conf'] ?? [] as $option => $value) {
+        foreach ($options['kafka_conf'] ?? [] as $option => $value) {
             $conf->set($option, $value);
         }
 
         $topicConf = new KafkaTopicConf();
 
-        foreach($options['topic_conf'] ?? [] as $option => $value) {
+        foreach ($options['topic_conf'] ?? [] as $option => $value) {
             $topicConf->set($option, $value);
         }
 
@@ -106,12 +107,13 @@ class KafkaTransportFactory implements TransportFactoryInterface
     private function stripProtocol(string $dsn): array
     {
         $brokers = [];
-        foreach (explode(',', $dsn) as $currentBroker){
+        foreach (explode(',', $dsn) as $currentBroker) {
             foreach (self::DSN_PROTOCOLS as $protocol) {
                 $currentBroker = str_replace($protocol, '', $currentBroker);
             }
             $brokers[] = $currentBroker;
         }
+
         return $brokers;
     }
 }

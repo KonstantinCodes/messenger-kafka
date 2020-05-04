@@ -44,11 +44,10 @@ class KafkaTransportFactoryTest extends TestCase
             [
                 'flushTimeout' => 10000,
                 'topic' => [
-                    'name' => 'kafka'
+                    'name' => 'kafka',
                 ],
                 'kafka_config' => [
-
-                ]
+                ],
             ],
             $this->serializerMock
         );

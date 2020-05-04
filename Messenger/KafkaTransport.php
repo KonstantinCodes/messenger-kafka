@@ -3,15 +3,14 @@
 namespace Koco\Kafka\Messenger;
 
 use Koco\Kafka\RdKafka\RdKafkaFactory;
-use function json_encode;
 use Psr\Log\LoggerInterface;
-use const RD_KAFKA_PARTITION_UA;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Producer as KafkaProducer;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
+use const RD_KAFKA_PARTITION_UA;
 
 class KafkaTransport implements TransportInterface
 {
@@ -80,12 +79,12 @@ class KafkaTransport implements TransportInterface
                 /** @var Envelope $envelope */
                 $envelope = $this->serializer->decode([
                     'body' => $message->payload,
-                    'headers' => $message->headers
+                    'headers' => $message->headers,
                 ]);
 
                 $envelope = $envelope->with(new KafkaMessageStamp($message));
 
-                return array($envelope);
+                return [$envelope];
 
                 break;
             case RD_KAFKA_RESP_ERR__PARTITION_EOF:
@@ -162,7 +161,7 @@ class KafkaTransport implements TransportInterface
 
     private function getConsumer(): KafkaConsumer
     {
-        if($this->consumer) {
+        if ($this->consumer) {
             return $this->consumer;
         }
 
@@ -173,7 +172,7 @@ class KafkaTransport implements TransportInterface
 
     private function getProducer(): KafkaProducer
     {
-        if($this->producer) {
+        if ($this->producer) {
             return $this->producer;
         }
 

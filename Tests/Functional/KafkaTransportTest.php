@@ -43,9 +43,9 @@ class KafkaTransportTest extends TestCase
             [
                 'flushTimeout' => 1000,
                 'topic' => [
-                    'name' => self::TOPIC_NAME
+                    'name' => self::TOPIC_NAME,
                 ],
-                'kafka_conf' => []
+                'kafka_conf' => [],
             ],
             $serializer
         );
@@ -60,15 +60,15 @@ class KafkaTransportTest extends TestCase
                 'commitAsync' => true,
                 'receiveTimeout' => 10000,
                 'topic' => [
-                    'name' => self::TOPIC_NAME
+                    'name' => self::TOPIC_NAME,
                 ],
                 'kafka_conf' => [
                     'group.id' => 'test_group',
-                    'enable.auto.offset.store' => 'false'
+                    'enable.auto.offset.store' => 'false',
                 ],
                 'topic_conf' => [
-                    'auto.offset.reset' => 'smallest'
-                ]
+                    'auto.offset.reset' => 'smallest',
+                ],
             ],
             $this->serializerMock
         );
@@ -85,8 +85,9 @@ class KafkaTransportTest extends TestCase
         $this->assertInstanceOf(TestMessage::class, $message);
     }
 
-    public function createDecodeClosure(Serializer $serializer) {
-        return function(array $encodedEnvelope) use ($serializer) {
+    public function createDecodeClosure(Serializer $serializer)
+    {
+        return function (array $encodedEnvelope) use ($serializer) {
             $this->assertIsArray($encodedEnvelope);
 
             $this->assertEquals('{"data":"my_test_data"}', $encodedEnvelope['body']);

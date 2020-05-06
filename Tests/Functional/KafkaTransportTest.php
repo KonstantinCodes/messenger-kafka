@@ -2,10 +2,12 @@
 
 namespace Koco\Kafka\Tests\Functional;
 
+use Closure;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 use Symfony\Component\Messenger\Transport\Serialization\Serializer;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
@@ -20,6 +22,20 @@ class KafkaTransportTest extends TestCase
     /** @var SerializerInterface */
     private $serializerMock;
 
+    /** @var string */
+    private $testIteration = 0;
+
+    /** @var \DateTimeInterface */
+    private $testStartTime;
+
+    public function __construct($name = null, array $data = [], $dataName = '')
+    {
+        parent::__construct($name, $data, $dataName);
+
+        $this->testStartTime = new \DateTimeImmutable();
+    }
+
+
     protected function setUp(): void
     {
         /** @var LoggerInterface $logger */
@@ -28,22 +44,44 @@ class KafkaTransportTest extends TestCase
         $this->factory = new KafkaTransportFactory($logger);
 
         $this->serializerMock = $this->createMock(SerializerInterface::class);
+
+        ++$this->testIteration;
+    }
+
+    public function serializerProvider()
+    {
+        $serializer = new Serializer();
+        $phpSerializer = new PhpSerializer();
+
+        return [
+            [
+                $serializer,
+                $this->createSerializerDecodeClosure($serializer),
+            ],
+            [
+                $phpSerializer,
+                $this->createPHPSerializerDecodeClosure($phpSerializer),
+            ],
+        ];
     }
 
     /**
+     * @dataProvider serializerProvider
+     *
      * @group legacy
      * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
+     *
+     * @param SerializerInterface $serializer
+     * @param Closure $decodeClosure
      */
-    public function testSendAndReceive()
+    public function testSendAndReceive(SerializerInterface $serializer, Closure $decodeClosure)
     {
-        $serializer = new Serializer();
-
         $sender = $this->factory->createTransport(
             self::BROKER,
             [
                 'flushTimeout' => 1000,
                 'topic' => [
-                    'name' => self::TOPIC_NAME,
+                    'name' => $this->getTopicName(),
                 ],
                 'kafka_conf' => [],
             ],
@@ -60,7 +98,7 @@ class KafkaTransportTest extends TestCase
                 'commitAsync' => true,
                 'receiveTimeout' => 10000,
                 'topic' => [
-                    'name' => self::TOPIC_NAME,
+                    'name' => $this->getTopicName(),
                 ],
                 'kafka_conf' => [
                     'group.id' => 'test_group',
@@ -75,7 +113,7 @@ class KafkaTransportTest extends TestCase
 
         $this->serializerMock->expects($this->once())
             ->method('decode')
-            ->willReturnCallback($this->createDecodeClosure($serializer));
+            ->willReturnCallback($decodeClosure);
 
         /** @var []Envelope $envelopes */
         $envelopes = $receiver->get();
@@ -83,9 +121,11 @@ class KafkaTransportTest extends TestCase
 
         $message = $envelopes[0]->getMessage();
         $this->assertInstanceOf(TestMessage::class, $message);
+
+        $receiver->ack($envelopes[0]);
     }
 
-    public function createDecodeClosure(Serializer $serializer)
+    public function createSerializerDecodeClosure(SerializerInterface $serializer): Closure
     {
         return function (array $encodedEnvelope) use ($serializer) {
             $this->assertIsArray($encodedEnvelope);
@@ -100,5 +140,26 @@ class KafkaTransportTest extends TestCase
 
             return $serializer->decode($encodedEnvelope);
         };
+    }
+
+    public function createPHPSerializerDecodeClosure(SerializerInterface $serializer): Closure
+    {
+        return function (array $encodedEnvelope) use ($serializer) {
+            $this->assertIsArray($encodedEnvelope);
+
+            $this->assertEquals(
+                'O:36:\"Symfony\\\\Component\\\\Messenger\\\\Envelope\":2:{s:44:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0stamps\";a:0:{}s:45:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0message\";O:39:\"Koco\\\\Kafka\\\\Tests\\\\Functional\\\\TestMessage\":1:{s:4:\"data\";s:12:\"my_test_data\";}}',
+                $encodedEnvelope['body']
+            );
+
+            $this->assertArrayHasKey('headers', $encodedEnvelope);
+
+            return $serializer->decode($encodedEnvelope);
+        };
+    }
+
+    private function getTopicName()
+    {
+        return self::TOPIC_NAME . '_' . $this->testStartTime->getTimestamp() . '_' . $this->testIteration;
     }
 }

@@ -61,7 +61,7 @@ jobs:
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
 
       - store_test_results:
-          path: ~/messenger-kafka/results/
+          path: ~/messenger-kafka/results/tests
 
       - store_artifacts:
           path:  ~/messenger-kafka/results/coverage-report

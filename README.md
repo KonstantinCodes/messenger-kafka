@@ -49,7 +49,7 @@ return [
 ## Configuration
 
 ### DSN
-Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. There can be multiple brokers separated by `,`.
+Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. Multiple brokers are separated by `,`.
 * `kafka://my-local-kafka:9092`
 * `kafka+ssl://my-staging-kafka:9093`
 * `kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-02:9093,kafka+ssl://prod-kafka-03:9093`

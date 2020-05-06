@@ -101,7 +101,7 @@ class KafkaTransportTest extends TestCase
                     'enable.auto.offset.store' => 'false',
                 ],
                 'topic_conf' => [
-                    'auto.offset.reset' => 'smallest',
+                    'auto.offset.reset' => 'earliest',
                 ],
             ],
             $this->serializerMock

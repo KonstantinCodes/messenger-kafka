@@ -50,31 +50,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
         $conf = new KafkaConf();
-        $logger = $this->logger;
 
         // Set a rebalance callback to log partition assignments (optional)
-        $conf->setRebalanceCb(function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
-            switch ($err) {
-                case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
-                    /** @var TopicPartition $topicPartition */
-                    foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
-                    }
-                    $kafka->assign($topicPartitions);
-                    break;
-
-                case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
-                    /** @var TopicPartition $topicPartition */
-                    foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
-                    }
-                    $kafka->assign(null);
-                    break;
-
-                default:
-                    throw new \Exception($err);
-            }
-        });
+        $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
 
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
@@ -115,5 +93,31 @@ class KafkaTransportFactory implements TransportFactoryInterface
         }
 
         return $brokers;
+    }
+
+    private function createRebalanceCb(LoggerInterface $logger): \Closure
+    {
+        return function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
+            switch ($err) {
+                case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
+                    /** @var TopicPartition $topicPartition */
+                    foreach ($topicPartitions as $topicPartition) {
+                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                    }
+                    $kafka->assign($topicPartitions);
+                    break;
+
+                case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
+                    /** @var TopicPartition $topicPartition */
+                    foreach ($topicPartitions as $topicPartition) {
+                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                    }
+                    $kafka->assign(null);
+                    break;
+
+                default:
+                    throw new \Exception($err);
+            }
+        };
     }
 }

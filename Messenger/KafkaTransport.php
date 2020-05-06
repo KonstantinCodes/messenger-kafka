@@ -77,17 +77,12 @@ class KafkaTransport implements TransportInterface
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
 
-                /** @var Envelope $envelope */
                 $envelope = $this->serializer->decode([
                     'body' => $message->payload,
                     'headers' => $message->headers,
                 ]);
 
-                $envelope = $envelope->with(new KafkaMessageStamp($message));
-
-                return [$envelope];
-
-                break;
+                return [$envelope->with(new KafkaMessageStamp($message))];
             case RD_KAFKA_RESP_ERR__PARTITION_EOF:
                 $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
                 break;

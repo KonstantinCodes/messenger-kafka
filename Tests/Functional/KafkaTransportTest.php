@@ -35,7 +35,6 @@ class KafkaTransportTest extends TestCase
         $this->testStartTime = new \DateTimeImmutable();
     }
 
-
     protected function setUp(): void
     {
         /** @var LoggerInterface $logger */
@@ -70,9 +69,6 @@ class KafkaTransportTest extends TestCase
      *
      * @group legacy
      * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
-     *
-     * @param SerializerInterface $serializer
-     * @param Closure $decodeClosure
      */
     public function testSendAndReceive(SerializerInterface $serializer, Closure $decodeClosure)
     {

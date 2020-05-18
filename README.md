@@ -58,7 +58,6 @@ Specify a DSN starting with either `kafka://` or  `kafka+ssl://`. Multiple broke
 The configuration options for `kafka_conf` and `topic_conf` can be found [here](https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md).
 It is highly recommended to set `enable.auto.offset.store` to `false` for consumers. Otherwise, every message will be acknowledged, regardless of any error thrown by the message handlers.
 
-
 ```yaml
 framework:
     messenger:

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\KafkaMessageStamp;
@@ -66,7 +68,7 @@ class KafkaTransportTest extends TestCase
             false
         );
 
-        $this->assertInstanceOf(TransportInterface::class, $transport);
+        static::assertInstanceOf(TransportInterface::class, $transport);
     }
 
     public function testGet()
@@ -91,7 +93,7 @@ class KafkaTransportTest extends TestCase
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->mockSerializer->expects($this->once())
+        $this->mockSerializer->expects(static::once())
             ->method('decode')
             ->with([
                 'body' => '{"data":null}',
@@ -114,22 +116,22 @@ class KafkaTransportTest extends TestCase
         );
 
         $receivedMessages = $transport->get();
-        $this->assertArrayHasKey(0, $receivedMessages);
+        static::assertArrayHasKey(0, $receivedMessages);
 
         /** @var Envelope $receivedMessage */
         $receivedMessage = $receivedMessages[0];
-        $this->assertInstanceOf(Envelope::class, $receivedMessage);
-        $this->assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
+        static::assertInstanceOf(Envelope::class, $receivedMessage);
+        static::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
 
         $stamps = $receivedMessage->all();
-        $this->assertCount(1, $stamps);
-        $this->assertArrayHasKey(KafkaMessageStamp::class, $stamps);
+        static::assertCount(1, $stamps);
+        static::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
 
         $kafkaMessageStamps = $stamps[KafkaMessageStamp::class];
-        $this->assertCount(1, $kafkaMessageStamps);
+        static::assertCount(1, $kafkaMessageStamps);
 
         /** @var KafkaMessageStamp $kafkaMessageStamp */
         $kafkaMessageStamp = $kafkaMessageStamps[0];
-        $this->assertEquals($testMessage, $kafkaMessageStamp->getMessage());
+        static::assertSame($testMessage, $kafkaMessageStamp->getMessage());
     }
 }

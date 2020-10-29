@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Messenger;
 
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
+use const RD_KAFKA_PARTITION_UA;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Producer as KafkaProducer;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
-use const RD_KAFKA_PARTITION_UA;
 
 class KafkaTransport implements TransportInterface
 {
@@ -94,7 +96,6 @@ class KafkaTransport implements TransportInterface
                 break;
             default:
                 throw new \Exception($message->errstr(), $message->err);
-                break;
         }
 
         return [];
@@ -152,7 +153,7 @@ class KafkaTransport implements TransportInterface
 
     private function getConsumer(): KafkaConsumer
     {
-        if ($this->consumer) {
+        if ($this->consumer !== null) {
             return $this->consumer;
         }
 
@@ -163,7 +164,7 @@ class KafkaTransport implements TransportInterface
 
     private function getProducer(): KafkaProducer
     {
-        if ($this->producer) {
+        if ($this->producer !== null) {
             return $this->producer;
         }
 

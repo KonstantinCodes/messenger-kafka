@@ -9,3 +9,4 @@ composer.lock
 /var
 /coverage
 .DS_Store
+/results

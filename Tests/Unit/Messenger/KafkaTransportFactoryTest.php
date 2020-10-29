@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\KafkaTransportFactory;
@@ -28,9 +30,9 @@ class KafkaTransportFactoryTest extends TestCase
 
     public function testSupports()
     {
-        $this->assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
-        $this->assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
-        $this->assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
+        static::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
+        static::assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
+        static::assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
     }
 
     /**
@@ -52,6 +54,6 @@ class KafkaTransportFactoryTest extends TestCase
             $this->serializerMock
         );
 
-        $this->assertInstanceOf(TransportInterface::class, $transport);
+        static::assertInstanceOf(TransportInterface::class, $transport);
     }
 }

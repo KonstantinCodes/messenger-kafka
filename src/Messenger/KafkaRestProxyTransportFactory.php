@@ -55,21 +55,7 @@ class KafkaRestProxyTransportFactory implements TransportFactoryInterface
 
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
-        if ($this->client === null) {
-            throw $this->createMissingServiceException(ClientInterface::class, 'PSR-7 HTTP Client not found.');
-        }
-
-        if ($this->requestFactory === null) {
-            throw $this->createMissingServiceException(RequestFactoryInterface::class, 'PSR HTTP RequestFactory not found.');
-        }
-
-        if ($this->uriFactory === null) {
-            throw $this->createMissingServiceException(UriFactoryInterface::class, 'PSR HTTP UriFactory not found.');
-        }
-
-        if ($this->streamFactory === null) {
-            throw $this->createMissingServiceException(StreamFactoryInterface::class, 'PSR HTTP StreamFactory not found.');
-        }
+        $this->checkDependencies();
 
         $dsn = $this->uriFactory->createUri($dsn);
         $scheme = $dsn->getScheme();
@@ -110,6 +96,25 @@ class KafkaRestProxyTransportFactory implements TransportFactoryInterface
         }
 
         return $dsnOptions;
+    }
+
+    private function checkDependencies(): void
+    {
+        if ($this->client === null) {
+            throw $this->createMissingServiceException(ClientInterface::class, 'PSR-7 HTTP Client not found.');
+        }
+
+        if ($this->requestFactory === null) {
+            throw $this->createMissingServiceException(RequestFactoryInterface::class, 'PSR HTTP RequestFactory not found.');
+        }
+
+        if ($this->uriFactory === null) {
+            throw $this->createMissingServiceException(UriFactoryInterface::class, 'PSR HTTP UriFactory not found.');
+        }
+
+        if ($this->streamFactory === null) {
+            throw $this->createMissingServiceException(StreamFactoryInterface::class, 'PSR HTTP StreamFactory not found.');
+        }
     }
 
     private function createMissingServiceException(string $className, string $message = null)

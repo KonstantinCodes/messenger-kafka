@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Functional;
 
 use Closure;
@@ -107,16 +109,16 @@ class KafkaTransportTest extends TestCase
             $this->serializerMock
         );
 
-        $this->serializerMock->expects($this->once())
+        $this->serializerMock->expects(static::once())
             ->method('decode')
             ->willReturnCallback($decodeClosure);
 
         /** @var []Envelope $envelopes */
         $envelopes = $receiver->get();
-        $this->assertInstanceOf(Envelope::class, $envelopes[0]);
+        static::assertInstanceOf(Envelope::class, $envelopes[0]);
 
         $message = $envelopes[0]->getMessage();
-        $this->assertInstanceOf(TestMessage::class, $message);
+        static::assertInstanceOf(TestMessage::class, $message);
 
         $receiver->ack($envelopes[0]);
     }
@@ -126,13 +128,13 @@ class KafkaTransportTest extends TestCase
         return function (array $encodedEnvelope) use ($serializer) {
             $this->assertIsArray($encodedEnvelope);
 
-            $this->assertEquals('{"data":"my_test_data"}', $encodedEnvelope['body']);
+            $this->assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
 
             $this->assertArrayHasKey('headers', $encodedEnvelope);
             $headers = $encodedEnvelope['headers'];
 
-            $this->assertEquals(TestMessage::class, $headers['type']);
-            $this->assertEquals('application/json', $headers['Content-Type']);
+            $this->assertSame(TestMessage::class, $headers['type']);
+            $this->assertSame('application/json', $headers['Content-Type']);
 
             return $serializer->decode($encodedEnvelope);
         };
@@ -143,7 +145,7 @@ class KafkaTransportTest extends TestCase
         return function (array $encodedEnvelope) use ($serializer) {
             $this->assertIsArray($encodedEnvelope);
 
-            $this->assertEquals(
+            $this->assertSame(
                 'O:36:\"Symfony\\\\Component\\\\Messenger\\\\Envelope\":2:{s:44:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0stamps\";a:0:{}s:45:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0message\";O:39:\"Koco\\\\Kafka\\\\Tests\\\\Functional\\\\TestMessage\":1:{s:4:\"data\";s:12:\"my_test_data\";}}',
                 $encodedEnvelope['body']
             );

@@ -9,5 +9,9 @@
             <tag name="messenger.transport_factory"/>
             <argument type="service" id="logger"/>
         </service>
+        <service id="Koco\Kafka\Messenger\KafkaRestProxyTransportFactory" class="Koco\Kafka\Messenger\KafkaRestProxyTransportFactory" public="false">
+            <tag name="messenger.transport_factory"/>
+            <argument type="service" id="logger"/>
+        </service>
     </services>
 </container>

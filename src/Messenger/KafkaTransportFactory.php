@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Messenger;
 
+use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
+use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
+use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\TopicConf as KafkaTopicConf;
 use RdKafka\TopicPartition;
-use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
-use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
-use Symfony\Component\Messenger\Transport\TransportInterface;
-use function explode;
 use function sprintf;
 use function str_replace;
 use function strpos;
-use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
-use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
+use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
+use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
+use Symfony\Component\Messenger\Transport\TransportInterface;
 
 class KafkaTransportFactory implements TransportFactoryInterface
 {
@@ -98,9 +100,11 @@ class KafkaTransportFactory implements TransportFactoryInterface
     private function createRebalanceCb(LoggerInterface $logger): \Closure
     {
         return function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
+            /** @var TopicPartition[] $topicPartitions */
+            $topicPartitions = $topicPartitions ?? [];
+
             switch ($err) {
                 case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
-                    /** @var TopicPartition $topicPartition */
                     foreach ($topicPartitions as $topicPartition) {
                         $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
@@ -108,7 +112,6 @@ class KafkaTransportFactory implements TransportFactoryInterface
                     break;
 
                 case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
-                    /** @var TopicPartition $topicPartition */
                     foreach ($topicPartitions as $topicPartition) {
                         $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }

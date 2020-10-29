@@ -10,7 +10,10 @@
     "symfony/config": "^3.0||^4.0||^5.0",
     "symfony/dependency-injection": "^3.4.26||^4.1.12|^5.0",
     "symfony/http-kernel": "^3.0||^4.0||^5.0",
-    "symfony/messenger": "^4.4||^5.0"
+    "symfony/messenger": "^4.4||^5.0",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.16",
@@ -22,7 +25,8 @@
     "phpstan/phpstan": "^0.12.52"
   },
   "suggest": {
-    "ext-rdkafka": "^4.0; Needed to support Kafka connectivity"
+    "ext-rdkafka": "^4.0; Needed to support Kafka connectivity",
+    "symfony/http-client": "^5.1; Needed to support Kafka REST Proxy"
   },
   "autoload": {
     "psr-4": { "Koco\\Kafka\\": "src/" }

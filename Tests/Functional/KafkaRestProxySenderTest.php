@@ -1,15 +1,12 @@
 <?php
 
+declare(strict_types=1);
 
 namespace Koco\Kafka\Tests\Functional;
 
-
 use Koco\Kafka\Messenger\KafkaRestProxySender;
-use Koco\Kafka\Messenger\KafkaRestProxyTransport;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\Transport\Serialization\Serializer;
-use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class KafkaRestProxySenderTest extends TestCase
 {

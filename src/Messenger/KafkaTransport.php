@@ -149,8 +149,8 @@ class KafkaTransport implements TransportInterface
 
         $code = $producer->flush($this->flushTimeoutMs);
 
-        if (RD_KAFKA_RESP_ERR__TIMED_OUT === $code) {
-            throw new TransportException('Kafka producer flush timeout.', $code);
+        if ($code !== RD_KAFKA_RESP_ERR_NO_ERROR) {
+            throw new TransportException('Kafka producer response error.', $code);
         }
 
         return $envelope;

@@ -11,6 +11,7 @@ use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Producer as KafkaProducer;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Exception\TransportException;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
@@ -146,7 +147,11 @@ class KafkaTransport implements TransportInterface
 
         $topic->producev(RD_KAFKA_PARTITION_UA, 0, $payload['body'], $payload['key'] ?? null, $payload['headers'] ?? null);
 
-        $producer->flush($this->flushTimeoutMs);
+        $code = $producer->flush($this->flushTimeoutMs);
+
+        if (RD_KAFKA_RESP_ERR__TIMED_OUT === $code) {
+            throw new TransportException('Kafka producer flush timeout.', $code);
+        }
 
         return $envelope;
     }

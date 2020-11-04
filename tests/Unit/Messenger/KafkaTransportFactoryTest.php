@@ -37,7 +37,6 @@ class KafkaTransportFactoryTest extends TestCase
 
     /**
      * @group legacy
-     * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
      */
     public function testCreateTransport()
     {

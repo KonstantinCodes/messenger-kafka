@@ -11,7 +11,6 @@ use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
 use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
-use RdKafka\TopicConf as KafkaTopicConf;
 use RdKafka\TopicPartition;
 use function sprintf;
 use function str_replace;
@@ -59,18 +58,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
 
-        foreach ($options['kafka_conf'] ?? [] as $option => $value) {
+        foreach (array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []) as $option => $value) {
             $conf->set($option, $value);
         }
-
-        $topicConf = new KafkaTopicConf();
-
-        foreach ($options['topic_conf'] ?? [] as $option => $value) {
-            $topicConf->set($option, $value);
-        }
-
-        // Set the configuration to use for subscribed/assigned topics
-        $conf->setDefaultTopicConf($topicConf);
 
         return new KafkaTransport(
             $this->logger,

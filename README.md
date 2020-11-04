@@ -6,7 +6,7 @@
 [![CircleCI](https://circleci.com/gh/KonstantinCodes/messenger-kafka.svg?style=svg)](https://circleci.com/gh/KonstantinCodes/messenger-kafka)
 [![Tests](https://github.com/KonstantinCodes/messenger-kafka/workflows/Tests/badge.svg)](https://github.com/KonstantinCodes/messenger-kafka/actions)
 
-This bundle aims to provide a simple Kafka transport for Symfony Messenger.
+This bundle aims to provide a simple Kafka transport for Symfony Messenger. Kafka REST Proxy support coming soon.
 
 ## Installation
 

@@ -68,9 +68,6 @@ class KafkaTransportTest extends TestCase
 
     /**
      * @dataProvider serializerProvider
-     *
-     * @group legacy
-     * @expectedDeprecation Unsilenced deprecation: Function RdKafka\Conf::setDefaultTopicConf() is deprecated
      */
     public function testSendAndReceive(SerializerInterface $serializer, Closure $decodeClosure)
     {

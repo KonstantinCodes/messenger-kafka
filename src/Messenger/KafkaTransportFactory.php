@@ -70,7 +70,8 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $options['topic']['name'],
             $options['flushTimeout'] ?? 10000,
             $options['receiveTimeout'] ?? 10000,
-            $options['commitAsync'] ?? false
+            $options['commitAsync'] ?? false,
+            $options['ackFailedMessages'] ?? true
         );
     }
 

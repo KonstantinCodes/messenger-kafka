@@ -9,8 +9,10 @@ use Psr\Log\LoggerInterface;
 use const RD_KAFKA_PARTITION_UA;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
+use RdKafka\Message;
 use RdKafka\Producer as KafkaProducer;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Exception\MessageDecodingFailedException;
 use Symfony\Component\Messenger\Exception\TransportException;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
@@ -50,6 +52,9 @@ class KafkaTransport implements TransportInterface
     /** @var bool */
     private $subscribed;
 
+    /** @var bool */
+    private $ackFailedMessages;
+
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
@@ -58,7 +63,8 @@ class KafkaTransport implements TransportInterface
         string $topicName,
         int $flushTimeoutMs,
         int $receiveTimeoutMs,
-        bool $commitAsync
+        bool $commitAsync,
+        bool $ackFailedMessages
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
@@ -68,6 +74,7 @@ class KafkaTransport implements TransportInterface
         $this->flushTimeoutMs = $flushTimeoutMs;
         $this->receiveTimeoutMs = $receiveTimeoutMs;
         $this->commitAsync = $commitAsync;
+        $this->ackFailedMessages = $ackFailedMessages;
 
         $this->subscribed = false;
     }
@@ -79,13 +86,7 @@ class KafkaTransport implements TransportInterface
         switch ($message->err) {
             case RD_KAFKA_RESP_ERR_NO_ERROR:
                 $this->logger->info(sprintf('Kafka: Message %s %s %s received ', $message->topic_name, $message->partition, $message->offset));
-
-                $envelope = $this->serializer->decode([
-                    'body' => $message->payload,
-                    'headers' => $message->headers,
-                ]);
-
-                return [$envelope->with(new KafkaMessageStamp($message))];
+                return $this->getEnvelope($message);
             case RD_KAFKA_RESP_ERR__PARTITION_EOF:
                 $this->logger->info('Kafka: Partition EOF reached. Waiting for next message ...');
                 break;
@@ -100,6 +101,22 @@ class KafkaTransport implements TransportInterface
         }
 
         return [];
+    }
+
+    private function getEnvelope(Message $message): iterable
+    {
+        try {
+            $envelope = $this->serializer->decode([
+                'body' => $message->payload,
+                'headers' => $message->headers,
+            ]);
+        } catch (MessageDecodingFailedException $exception) {
+            $this->rejectKafkaMessage($message);
+
+            throw $exception;
+        }
+
+        return [$envelope->with(new KafkaMessageStamp($message))];
     }
 
     public function getSubscribedConsumer(): KafkaConsumer
@@ -135,7 +152,28 @@ class KafkaTransport implements TransportInterface
 
     public function reject(Envelope $envelope): void
     {
-        // Do nothing. auto commit should be set to false!
+        /** @var KafkaMessageStamp $transportStamp */
+        $transportStamp = $envelope->last(KafkaMessageStamp::class);
+        $message = $transportStamp->getMessage();
+
+        $this->rejectKafkaMessage($message);
+    }
+
+    private function rejectKafkaMessage(Message $message): void
+    {
+        if (false === $this->ackFailedMessages) {
+            return;
+        }
+
+        $consumer = $this->getConsumer();
+
+        if ($this->commitAsync) {
+            $consumer->commitAsync($message);
+        } else {
+            $consumer->commit($message);
+        }
+
+        $this->logger->warning(sprintf('Message %s %s %s rejected successful.', $message->topic_name, $message->partition, $message->offset));
     }
 
     public function send(Envelope $envelope): Envelope

@@ -65,7 +65,8 @@ class KafkaTransportTest extends TestCase
             'test',
             10000,
             10000,
-            false
+            false,
+            true
         );
 
         static::assertInstanceOf(TransportInterface::class, $transport);
@@ -104,6 +105,10 @@ class KafkaTransportTest extends TestCase
             ])
             ->willReturn(new Envelope(new TestMessage()));
 
+        $this->mockRdKafkaConsumer
+            ->method('commitAsync')
+            ->with($testMessage);
+
         $transport = new KafkaTransport(
             $this->mockLogger,
             $this->mockSerializer,
@@ -112,7 +117,8 @@ class KafkaTransportTest extends TestCase
             'test',
             10000,
             10000,
-            false
+            false,
+            true
         );
 
         $receivedMessages = $transport->get();

@@ -65,6 +65,7 @@ framework:
                 options:
                     commitAsync: true
                     receiveTimeout: 10000
+                    ackFailedMessages: true
                     topic:
                         name: "events"
                     kafka_conf:
@@ -111,3 +112,14 @@ final class MySerializer extends Serializer
     }
 }
 ```
+
+## Failing messages
+By default this bundle supports the `MessageDecodingFailedException` (when failing deserialization),
+a message will be acknowledged (because there is no reject within Kafka).
+
+When an exception is thrown within a MessageHandlerInterface, a `WorkerMessageFailedEvent` will be
+ fired. The original message will be acknowledged and the retry process is started (creating a retry
+  message or move to failed transport).
+
+If you want to disable the acknowledgement of a failing message, you can configure `ackFailedMessages
+: false` within options.

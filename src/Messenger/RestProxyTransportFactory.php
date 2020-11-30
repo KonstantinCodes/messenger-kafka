@@ -14,7 +14,7 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
-class KafkaRestProxyTransportFactory implements TransportFactoryInterface
+class RestProxyTransportFactory implements TransportFactoryInterface
 {
     private const DSN_PROTOCOL_KAFKA_REST = 'kafka+rest';
     private const DSN_PROTOCOL_KAFKA_REST_SSL = 'kafka+rest+ssl';
@@ -73,7 +73,7 @@ class KafkaRestProxyTransportFactory implements TransportFactoryInterface
             throw new \InvalidArgumentException('The DSN is not formatted as expected.');
         }
 
-        return new KafkaRestProxyTransport(
+        return new RestProxyTransport(
             $baseUri,
             $options['topic'],
             $serializer,

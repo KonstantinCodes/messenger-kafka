@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Sender\SenderInterface;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
-class KafkaRestProxySender implements SenderInterface
+class RestProxySender implements SenderInterface
 {
     /** @var UriInterface */
     private $baseUri;

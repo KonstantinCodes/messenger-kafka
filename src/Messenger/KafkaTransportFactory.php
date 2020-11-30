@@ -7,6 +7,7 @@ namespace Koco\Kafka\Messenger;
 use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
 use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;
@@ -32,9 +33,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
     private $logger;
 
     public function __construct(
-        LoggerInterface $logger
+        ?LoggerInterface $logger
     ) {
-        $this->logger = $logger;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function supports(string $dsn, array $options): bool
@@ -66,11 +67,18 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $this->logger,
             $serializer,
             new RdKafkaFactory(),
-            $conf,
-            $options['topic']['name'],
-            $options['flushTimeout'] ?? 10000,
-            $options['receiveTimeout'] ?? 10000,
-            $options['commitAsync'] ?? false
+            new KafkaSenderProperties(
+                $conf,
+                $options['topic']['name'],
+                $options['flushTimeout'] ?? 10000,
+                $options['flushRetries'] ?? 0
+            ),
+            new KafkaReceiverProperties(
+                $conf,
+                $options['topic']['name'],
+                $options['receiveTimeout'] ?? 10000,
+                $options['commitAsync'] ?? false
+            )
         );
     }
 

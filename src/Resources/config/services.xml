@@ -9,7 +9,7 @@
             <tag name="messenger.transport_factory"/>
             <argument type="service" id="logger" on-invalid="null"/>
         </service>
-        <service id="Koco\Kafka\Messenger\KafkaRestProxyTransportFactory" class="Koco\Kafka\Messenger\KafkaRestProxyTransportFactory" public="false">
+        <service id="Koco\Kafka\Messenger\RestProxyTransportFactory" class="Koco\Kafka\Messenger\RestProxyTransportFactory" public="false">
             <tag name="messenger.transport_factory"/>
             <argument type="service" id="logger" on-invalid="null"/>
             <argument type="service" id="Psr\Http\Client\ClientInterface" on-invalid="null"/>

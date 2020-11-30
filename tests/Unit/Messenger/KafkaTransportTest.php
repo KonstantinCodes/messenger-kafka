@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\KafkaMessageStamp;
+use Koco\Kafka\Messenger\KafkaReceiverProperties;
+use Koco\Kafka\Messenger\KafkaSenderProperties;
 use Koco\Kafka\Messenger\KafkaTransport;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -61,11 +63,18 @@ class KafkaTransportTest extends TestCase
             $this->mockLogger,
             $this->mockSerializer,
             new RdKafkaFactory(),
-            new KafkaConf(),
-            'test',
-            10000,
-            10000,
-            false
+            new KafkaSenderProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                10000
+            ),
+            new KafkaReceiverProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                false
+            )
         );
 
         static::assertInstanceOf(TransportInterface::class, $transport);
@@ -108,11 +117,18 @@ class KafkaTransportTest extends TestCase
             $this->mockLogger,
             $this->mockSerializer,
             $this->mockRdKafkaFactory,
-            new KafkaConf(),
-            'test',
-            10000,
-            10000,
-            false
+            new KafkaSenderProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                10000
+            ),
+            new KafkaReceiverProperties(
+                new KafkaConf(),
+                'test',
+                10000,
+                false
+            )
         );
 
         $receivedMessages = $transport->get();

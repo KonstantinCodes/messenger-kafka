@@ -11,6 +11,20 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    services:
+      kafka:
+        image: lensesio/fast-data-dev
+        env:
+          SAMPLEDATA: 0
+          RUNTESTS: 0
+          FORWARDLOGS: 0
+        ports:
+          - 9092:9092
+          - 8081:8081
+          - 8082:8082
+          - 8083:8083
+          - 2181:2181
+
     steps:
       - uses: actions/checkout@v2
 
@@ -18,15 +32,23 @@ jobs:
         run: composer validate
 
       - name: Install rdkafka
-        run: sudo apt-get update && sudo apt-get install librdkafka1 librdkafka-dev php-pear php-common && sudo pecl install rdkafka
+        run:
+          wget -O confluent_archive.key https://packages.confluent.io/deb/6.0/archive.key &&
+          sudo apt-key add confluent_archive.key &&
+          sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/6.0 stable main" &&
+          sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev kafkacat
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
           coverage: xdebug
+          tools: pecl, phpunit
           extensions: rdkafka
           ini-values: post_max_size=256M, short_open_tag=On
+
+      - name: check if rdkafka is there
+        run: php -v && php --ri rdkafka
 
       - name: Cache Composer packages
         id: composer-cache
@@ -39,8 +61,15 @@ jobs:
 
       - name: Install dependencies
         if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer update --prefer-dist --no-progress
+
+      - name: Wait for Kafka
+        run: .github/workflows/wait-for-kafka.sh
+
+
+      #- name: try to produce
+      #  run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json
 
       # Docs: https://getcomposer.org/doc/articles/scripts.md
-      - name: Run test suite
-        run: ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
+      #- name: Run test suite
+      #  run: phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml

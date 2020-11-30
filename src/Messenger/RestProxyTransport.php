@@ -15,7 +15,7 @@ use Symfony\Component\Messenger\Transport\Receiver\MessageCountAwareInterface;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
-class KafkaRestProxyTransport implements TransportInterface, MessageCountAwareInterface
+class RestProxyTransport implements TransportInterface, MessageCountAwareInterface
 {
     /** @var UriInterface */
     private $baseUri;
@@ -43,7 +43,7 @@ class KafkaRestProxyTransport implements TransportInterface, MessageCountAwareIn
 
     private $receiver;
 
-    /** @var KafkaRestProxySender */
+    /** @var RestProxySender */
     private $sender;
 
     public function __construct(
@@ -106,9 +106,9 @@ class KafkaRestProxyTransport implements TransportInterface, MessageCountAwareIn
         throw new \Exception('Not implemented!');
     }
 
-    private function getSender(): KafkaRestProxySender
+    private function getSender(): RestProxySender
     {
-        return $this->sender = new KafkaRestProxySender(
+        return $this->sender = new RestProxySender(
             $this->baseUri,
             $this->topicName,
             $this->serializer,

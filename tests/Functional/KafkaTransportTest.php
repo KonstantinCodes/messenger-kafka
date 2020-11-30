@@ -30,13 +30,6 @@ class KafkaTransportTest extends TestCase
     /** @var \DateTimeInterface */
     private $testStartTime;
 
-    public function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-
-        $this->testStartTime = new \DateTimeImmutable();
-    }
-
     protected function setUp(): void
     {
         /** @var LoggerInterface $logger */
@@ -47,6 +40,8 @@ class KafkaTransportTest extends TestCase
         $this->serializerMock = $this->createMock(SerializerInterface::class);
 
         ++$this->testIteration;
+
+        $this->testStartTime = $this->testStartTime ?? new \DateTimeImmutable();
     }
 
     public function serializerProvider()
@@ -74,7 +69,7 @@ class KafkaTransportTest extends TestCase
         $sender = $this->factory->createTransport(
             self::BROKER,
             [
-                'flushTimeout' => 1000,
+                'flushTimeout' => 5000,
                 'topic' => [
                     'name' => $this->getTopicName(),
                 ],
@@ -98,6 +93,7 @@ class KafkaTransportTest extends TestCase
                 'kafka_conf' => [
                     'group.id' => 'test_group',
                     'enable.auto.offset.store' => 'false',
+                    'session.timeout.ms' => '10000',
                 ],
                 'topic_conf' => [
                     'auto.offset.reset' => 'earliest',

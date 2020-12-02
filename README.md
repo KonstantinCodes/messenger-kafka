@@ -51,6 +51,7 @@ framework:
                 # serializer: App\Infrastructure\Messenger\MySerializer
                 options:
                     flushTimeout: 10000
+                    flushRetries: 5
                     topic:
                         name: 'events'
                     kafka_conf:

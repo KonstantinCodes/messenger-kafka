@@ -79,7 +79,7 @@ class KafkaTransport implements TransportInterface
 
     private function getReceiver(): KafkaReceiver
     {
-        return $this->receiver ?? $this->sender = new KafkaReceiver(
+        return $this->receiver ?? $this->receiver = new KafkaReceiver(
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,

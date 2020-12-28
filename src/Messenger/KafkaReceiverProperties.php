@@ -20,16 +20,21 @@ final class KafkaReceiverProperties
     /** @var bool */
     private $commitAsync;
 
+    /** @var array */
+    private $headers;
+
     public function __construct(
         KafkaConf $kafkaConf,
         string $topicName,
         int $receiveTimeoutMs,
-        bool $commitAsync
+        bool $commitAsync,
+        array $headers
     ) {
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
         $this->receiveTimeoutMs = $receiveTimeoutMs;
         $this->commitAsync = $commitAsync;
+        $this->headers = $headers;
     }
 
     public function getKafkaConf(): KafkaConf
@@ -50,5 +55,10 @@ final class KafkaReceiverProperties
     public function isCommitAsync(): bool
     {
         return $this->commitAsync;
+    }
+
+    public function getHeaders(): array
+    {
+        return $this->headers;
     }
 }

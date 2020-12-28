@@ -61,7 +61,7 @@ class KafkaReceiver implements ReceiverInterface
 
                 $envelope = $this->serializer->decode([
                     'body' => $message->payload,
-                    'headers' => $message->headers,
+                    'headers' => array_merge($this->properties->getHeaders(), $message->headers ?? []),
                     'key' => $message->key,
                     'offset' => $message->offset,
                     'timestamp' => $message->timestamp,

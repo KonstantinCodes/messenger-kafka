@@ -73,7 +73,8 @@ class KafkaTransportTest extends TestCase
                 new KafkaConf(),
                 'test',
                 10000,
-                false
+                false,
+                []
             )
         );
 
@@ -110,6 +111,9 @@ class KafkaTransportTest extends TestCase
                     'type' => TestMessage::class,
                     'Content-Type' => 'application/json',
                 ],
+                'key' => null,
+                'offset' => 0,
+                'timestamp' => 1586861356,
             ])
             ->willReturn(new Envelope(new TestMessage()));
 
@@ -127,7 +131,8 @@ class KafkaTransportTest extends TestCase
                 new KafkaConf(),
                 'test',
                 10000,
-                false
+                false,
+                []
             )
         );
 

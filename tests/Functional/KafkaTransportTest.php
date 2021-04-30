@@ -6,6 +6,7 @@ namespace Koco\Kafka\Tests\Functional;
 
 use Closure;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
+use Koco\Kafka\RdKafka\RdKafkaFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -35,7 +36,7 @@ class KafkaTransportTest extends TestCase
         /** @var LoggerInterface $logger */
         $logger = $this->createMock(LoggerInterface::class);
 
-        $this->factory = new KafkaTransportFactory($logger);
+        $this->factory = new KafkaTransportFactory(new RdKafkaFactory(), $logger);
 
         $this->serializerMock = $this->createMock(SerializerInterface::class);
 

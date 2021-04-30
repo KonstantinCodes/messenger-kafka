@@ -32,10 +32,15 @@ class KafkaTransportFactory implements TransportFactoryInterface
     /** @var LoggerInterface */
     private $logger;
 
+    /** @var RdKafkaFactory */
+    private $kafkaFactory;
+
     public function __construct(
+        RdKafkaFactory $kafkaFactory,
         ?LoggerInterface $logger
     ) {
         $this->logger = $logger ?? new NullLogger();
+        $this->kafkaFactory = $kafkaFactory;
     }
 
     public function supports(string $dsn, array $options): bool
@@ -66,7 +71,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
         return new KafkaTransport(
             $this->logger,
             $serializer,
-            new RdKafkaFactory(),
+            $this->kafkaFactory,
             new KafkaSenderProperties(
                 $conf,
                 $options['topic']['name'],

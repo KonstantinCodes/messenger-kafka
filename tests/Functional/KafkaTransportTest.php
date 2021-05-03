@@ -16,7 +16,7 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class KafkaTransportTest extends TestCase
 {
-    private const BROKER = 'localhost:9092';
+    private const BROKER = '127.0.0.1:9092';
     private const TOPIC_NAME = 'test_topic';
 
     /** @var KafkaTransportFactory */
@@ -71,6 +71,7 @@ class KafkaTransportTest extends TestCase
             self::BROKER,
             [
                 'flushTimeout' => 5000,
+                'flushRetries' => 5,
                 'topic' => [
                     'name' => $this->getTopicName(),
                 ],

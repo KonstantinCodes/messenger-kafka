@@ -15,6 +15,7 @@ jobs:
       kafka:
         image: lensesio/fast-data-dev
         env:
+          ADV_HOST: 127.0.0.1
           SAMPLEDATA: 0
           RUNTESTS: 0
           FORWARDLOGS: 0
@@ -33,15 +34,12 @@ jobs:
 
       - name: Install rdkafka
         run:
-          wget -O confluent_archive.key https://packages.confluent.io/deb/6.0/archive.key &&
-          sudo apt-key add confluent_archive.key &&
-          sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/6.0 stable main" &&
-          sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev kafkacat
+          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4'
+          php-version: '8.0'
           coverage: xdebug
           tools: pecl, phpunit
           extensions: rdkafka
@@ -66,6 +64,8 @@ jobs:
       - name: Wait for Kafka
         run: .github/workflows/wait-for-kafka.sh
 
+      - name: Unit Tests
+        run: ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml
 
       #- name: try to produce
       #  run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json

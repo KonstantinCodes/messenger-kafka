@@ -73,7 +73,8 @@ class KafkaTransportTest extends TestCase
                 new KafkaConf(),
                 'test',
                 10000,
-                false
+                false,
+                []
             )
         );
 
@@ -130,7 +131,8 @@ class KafkaTransportTest extends TestCase
                 new KafkaConf(),
                 'test',
                 10000,
-                false
+                false,
+                []
             )
         );
 

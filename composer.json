@@ -28,7 +28,7 @@
   },
   "suggest": {
     "ext-rdkafka": "^4.0; Needed to support Kafka connectivity",
-    "symfony/http-client": "^5.1; Needed to support Kafka REST Proxy"
+    "koco/avro-regy": "Confluent Schema Registry integration"
   },
   "autoload": {
     "psr-4": { "Koco\\Kafka\\": "src/" }

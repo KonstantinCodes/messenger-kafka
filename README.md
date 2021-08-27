@@ -81,14 +81,17 @@ framework:
                         auto.offset.reset: 'earliest'
 ```
 
-## Message Formats
+## Serializer
 You will most likely want to implement your own Serializer.
 Please see: [https://symfony.com/doc/current/messenger.html#serializing-messages](https://symfony.com/doc/current/messenger.html#serializing-messages)
+
+The fields `key`, `headers`, and `body` are available in the `decode()` and `encode()` methods.
 
 ```php
 <?php
 namespace App\Infrastructure\Messenger;
 
+use App\Catalogue\Domain\Model\Event\ProductCreated;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
@@ -96,17 +99,63 @@ final class MySerializer implements SerializerInterface
 {
     public function decode(array $encodedEnvelope): Envelope
     {
-        // ...
+        $record = json_decode($encodedEnvelope['body'], true);
+
+        return new Envelope(new ProductCreated(
+            $record['id'],
+            $record['name'],
+            $record['description'],
+        ));
     }
 
     public function encode(Envelope $envelope): array
     {
-        // ...
+        /** @var ProductCreated $event */
+        $event = $envelope->getMessage();
+        
+        return [
+            'key' => $event->getId(),
+            'headers' => [],
+            'body' => json_encode([
+                'id' => $event->getId(),
+                'name' => $event->getName(),
+                'description' => $event->getDescription(),
+            ]),
+        ];
     }
 
 }
 ```
 
-### How do I work with Avro?
+## How do I work with Avro?
 Same as with the basic example above, you need to build your own serializer.
 Within the `decode()` and `encode()` you can make use of [flix-tech/avro-serde-php](https://github.com/flix-tech/avro-serde-php).
+
+## What about the Confluent Schema Registry?
+To connect with Schema Registry and control various settings, you can use this bundle:
+
+```console
+$ composer require koco/avro-regy
+```
+
+And configure it to match your setup:
+
+```yaml
+avro_regy:
+  base_uri: '%env(SCHEMA_REGISTRY_URL)%'
+  file_naming_strategy: subject
+  options:
+    register_missing_schemas: true
+    register_missing_subjects: true
+  serializers:
+    catalogue:
+      schema_dir: '%kernel.project_dir%/src/Catalogue/Domain/Model/Event/Avro/'
+    orders:
+      schema_dir: '%kernel.project_dir%/src/Orders/Domain/Model/Event/Avro/'
+      file_naming_strategy: qualified_name
+      options:
+        register_missing_schemas: false
+        register_missing_subjects: false
+```
+
+Please see [https://github.com/KonstantinCodes/avro-regy](https://github.com/KonstantinCodes/avro-regy) for the full documentation.

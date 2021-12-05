@@ -14,23 +14,12 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class KafkaReceiver implements ReceiverInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var RdKafkaFactory */
-    private $rdKafkaFactory;
-
-    /** @var KafkaReceiverProperties */
-    private $properties;
-
-    /** @var KafkaConsumer */
-    private $consumer;
-
-    /** @var bool */
-    private $subscribed;
+    private LoggerInterface $logger;
+    private SerializerInterface $serializer;
+    private RdKafkaFactory $rdKafkaFactory;
+    private KafkaReceiverProperties $properties;
+    private KafkaConsumer $consumer;
+    private bool $subscribed;
 
     public function __construct(
         LoggerInterface $logger,

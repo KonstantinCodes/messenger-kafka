@@ -14,20 +14,11 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class KafkaSender implements SenderInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var RdKafkaFactory */
-    private $rdKafkaFactory;
-
-    /** @var KafkaSenderProperties */
-    private $properties;
-
-    /** @var KafkaProducer */
-    private $producer;
+    private LoggerInterface $logger;
+    private SerializerInterface $serializer;
+    private RdKafkaFactory $rdKafkaFactory;
+    private KafkaSenderProperties $properties;
+    private KafkaProducer $producer;
 
     public function __construct(
         LoggerInterface $logger,
@@ -45,17 +36,39 @@ class KafkaSender implements SenderInterface
     {
         $producer = $this->getProducer();
         $topic = $producer->newTopic($this->properties->getTopicName());
-
         $payload = $this->serializer->encode($envelope);
 
-        $topic->producev(
-            RD_KAFKA_PARTITION_UA,
-            0,
-            $payload['body'],
-            $payload['key'] ?? null,
-            $payload['headers'] ?? null,
-            $payload['timestamp_ms'] ?? null
-        );
+        if (method_exists($topic, 'producev')) {
+            // ext-rdkafka <= 4.0.0 will fail calling `producev` on librdkafka >= 1.0.0 causing segfault
+            // Since we are forcing to use at least librdkafka:1.0.0, no need to check the lib version anymore
+            if (false !== phpversion('rdkafka') && version_compare(phpversion('rdkafka'), '4.0.0', '<')) {
+                trigger_error(
+                    'ext-rdkafka < 4.0.0 is incompatible with lib-rdkafka 1.0.0 when calling `producev`. '.
+                    'Falling back to `produce` (without message headers) instead.',
+                    \E_USER_WARNING
+                );
+            } else {
+                $topic->producev(
+                    RD_KAFKA_PARTITION_UA,
+                    0,
+                    $payload['body'],
+                    $payload['key'] ?? null,
+                    $payload['headers'] ?? null,
+                    $payload['timestamp_ms'] ?? null
+                );
+
+                $this->producer->poll(0);
+            }
+        } else {
+            $topic->produce(
+                RD_KAFKA_PARTITION_UA,
+                0,
+                $payload['body'],
+                $payload['key'] ?? null
+            );
+
+            $this->producer->poll(0);
+        }
 
         for ($flushRetries = 0; $flushRetries < $this->properties->getFlushRetries() + 1; ++$flushRetries) {
             $code = $producer->flush($this->properties->getFlushTimeoutMs());
@@ -74,6 +87,6 @@ class KafkaSender implements SenderInterface
 
     private function getProducer(): KafkaProducer
     {
-        return $this->producer ?? $this->producer = $this->rdKafkaFactory->createProducer($this->properties->getKafkaConf());
+        return $this->producer ??= $this->rdKafkaFactory->createProducer($this->properties->getKafkaConf());
     }
 }

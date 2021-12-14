@@ -8,8 +8,12 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - "7.4"
+          - "8.0"
 
     services:
       kafka:
@@ -39,7 +43,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: "${{ matrix.php }}"
           coverage: xdebug
           tools: pecl, phpunit
           extensions: rdkafka

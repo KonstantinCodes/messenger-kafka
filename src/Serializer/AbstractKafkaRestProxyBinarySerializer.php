@@ -11,7 +11,7 @@ abstract class AbstractKafkaRestProxyBinarySerializer implements SerializerInter
 {
     public function decode(array $encodedEnvelope): Envelope
     {
-        // TODO: Implement decode() method.
+        throw new \LogicException('Method not implemented yet');
     }
 
     public function encode(Envelope $envelope): array

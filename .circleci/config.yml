@@ -62,6 +62,12 @@ jobs:
             XDEBUG_MODE=coverage ./vendor/bin/simple-phpunit --log-junit junit.xml --coverage-clover clover.xml
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
 
+      - store_test_results:
+          path: ~/messenger-kafka/junit.xml
+
+      - store_test_results:
+          path: ~/messenger-kafka/clover.xml
+
 workflows:
   all-versions:
     jobs:

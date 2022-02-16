@@ -4,7 +4,7 @@ orbs:
 jobs:
   build:
     parameters:
-      php:
+      php-version:
         type: string
     environment:
       CC_TEST_REPORTER_ID: ac6b0ffb95381a6e67239f27805263c12cdb85bc1b8f3bc295173a8cb12ae2b1
@@ -74,7 +74,7 @@ workflows:
     jobs:
       - build:
           name: "php-7.4"
-          php: "7.4"
+          php-version: "7.4"
       - build:
           name: "php-8.1"
-          php: "8.1"
+          php-version: "8.1"

@@ -10,7 +10,7 @@ jobs:
       CC_TEST_REPORTER_ID: ac6b0ffb95381a6e67239f27805263c12cdb85bc1b8f3bc295173a8cb12ae2b1
     working_directory: ~/messenger-kafka
     docker:
-      - image: circleci/php:<< matrix.php >>
+      - image: circleci/php:<< parameters.php-version >>
       - image: lensesio/fast-data-dev
         environment:
           SAMPLEDATA: 0

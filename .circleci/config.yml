@@ -22,7 +22,7 @@ jobs:
 
       - run: sudo apt update
       - run: sudo apt install librdkafka1 librdkafka-dev kafkacat netcat
-      - run: sudo pecl install rdkafka zip xdebug
+      - run: sudo pecl install rdkafka xdebug
 
       # Download and cache dependencies
       - restore_cache:

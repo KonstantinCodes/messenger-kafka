@@ -3,17 +3,14 @@ orbs:
   wait-for: cobli/wait-for@0.0.2
 jobs:
   build:
-    strategy:
-      matrix:
-        php:
-          - "7.4.26"
-          - "8.0.13"
-
+    parameters:
+      php:
+        type: string
     environment:
       CC_TEST_REPORTER_ID: ac6b0ffb95381a6e67239f27805263c12cdb85bc1b8f3bc295173a8cb12ae2b1
     working_directory: ~/messenger-kafka
     docker:
-      - image: circleci/php:"${{ matrix.php }}"
+      - image: circleci/php:<< matrix.php >>
       - image: lensesio/fast-data-dev
         environment:
           SAMPLEDATA: 0
@@ -71,3 +68,13 @@ jobs:
 
       - store_artifacts:
           path:  ~/messenger-kafka/results/coverage-report
+
+workflows:
+  all-versions:
+    jobs:
+      - build:
+          name: "php-7.4"
+          php: "7.4"
+      - build:
+          name: "php-8.1"
+          php: "8.1"

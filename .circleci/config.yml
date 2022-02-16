@@ -59,7 +59,7 @@ jobs:
           name: PHPUnit
           command: |
             ./cc-test-reporter before-build
-            ./vendor/bin/simple-phpunit --log-junit junit.xml --coverage-clover clover.xml
+            XDEBUG_MODE=coverage ./vendor/bin/simple-phpunit --log-junit junit.xml --coverage-clover clover.xml
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
 
 workflows:

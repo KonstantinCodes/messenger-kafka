@@ -76,5 +76,5 @@ workflows:
           name: "php-7.4"
           php-version: "7.4"
       - build:
-          name: "php-8.1"
-          php-version: "8.1"
+          name: "php-8.0"
+          php-version: "8.0"

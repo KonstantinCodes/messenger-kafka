@@ -22,7 +22,7 @@ jobs:
 
       - run: sudo apt update
       - run: sudo apt install librdkafka1 librdkafka-dev kafkacat netcat
-      - run: sudo pecl install rdkafka zip
+      - run: sudo pecl install rdkafka zip xdebug
 
       # Download and cache dependencies
       - restore_cache:
@@ -58,16 +58,9 @@ jobs:
       - run:
           name: PHPUnit
           command: |
-            mkdir results && mkdir results/tests
             ./cc-test-reporter before-build
-            ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
+            ./vendor/bin/simple-phpunit --log-junit junit.xml --coverage-clover clover.xml
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
-
-      - store_test_results:
-          path: ~/messenger-kafka/results/tests
-
-      - store_artifacts:
-          path:  ~/messenger-kafka/results/coverage-report
 
 workflows:
   all-versions:

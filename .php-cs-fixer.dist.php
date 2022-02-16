@@ -9,7 +9,8 @@ $finder = PhpCsFixer\Finder::create()
     ->notPath('config/preload.php')
 ;
 
-return PhpCsFixer\Config::create()
+$config = new PhpCsFixer\Config();
+$config
     ->setRiskyAllowed(true)
     ->setRules([
         '@Symfony' => true,
@@ -23,3 +24,5 @@ return PhpCsFixer\Config::create()
     ])
     ->setFinder($finder)
     ;
+
+return $config;

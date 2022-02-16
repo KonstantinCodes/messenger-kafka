@@ -10,3 +10,4 @@ composer.lock
 /coverage
 .DS_Store
 /results
+/.php-cs-fixer.cache

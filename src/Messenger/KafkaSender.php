@@ -43,9 +43,9 @@ class KafkaSender implements SenderInterface
             // Since we are forcing to use at least librdkafka:1.0.0, no need to check the lib version anymore
             if (false !== phpversion('rdkafka') && version_compare(phpversion('rdkafka'), '4.0.0', '<')) {
                 trigger_error(
-                    'ext-rdkafka < 4.0.0 is incompatible with lib-rdkafka 1.0.0 when calling `producev`. '.
+                    'ext-rdkafka < 4.0.0 is incompatible with lib-rdkafka 1.0.0 when calling `producev`. ' .
                     'Falling back to `produce` (without message headers) instead.',
-                    \E_USER_WARNING
+                    E_USER_WARNING
                 );
             } else {
                 $topic->producev(

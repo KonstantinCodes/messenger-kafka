@@ -3,17 +3,14 @@ orbs:
   wait-for: cobli/wait-for@0.0.2
 jobs:
   build:
-    strategy:
-      matrix:
-        php:
-          - "7.4.26"
-          - "8.0.13"
-
+    parameters:
+      php-version:
+        type: string
     environment:
       CC_TEST_REPORTER_ID: ac6b0ffb95381a6e67239f27805263c12cdb85bc1b8f3bc295173a8cb12ae2b1
     working_directory: ~/messenger-kafka
     docker:
-      - image: circleci/php:"${{ matrix.php }}"
+      - image: cimg/php:<< parameters.php-version >>
       - image: lensesio/fast-data-dev
         environment:
           SAMPLEDATA: 0
@@ -23,9 +20,9 @@ jobs:
     steps:
       - checkout
 
-      - run: sudo apt update # PHP CircleCI 2.0 Configuration File# PHP CircleCI 2.0 Configuration File sudo apt install zlib1g-dev libsqlite3-dev
+      - run: sudo apt update
       - run: sudo apt install librdkafka1 librdkafka-dev kafkacat netcat
-      - run: sudo docker-php-ext-install zip && sudo pecl install rdkafka && sudo docker-php-ext-enable rdkafka
+      - run: sudo pecl install rdkafka xdebug
 
       # Download and cache dependencies
       - restore_cache:
@@ -61,13 +58,22 @@ jobs:
       - run:
           name: PHPUnit
           command: |
-            mkdir results && mkdir results/tests
             ./cc-test-reporter before-build
-            ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
+            XDEBUG_MODE=coverage ./vendor/bin/simple-phpunit --log-junit junit.xml --coverage-clover clover.xml
             ./cc-test-reporter after-build --coverage-input-type clover --exit-code $?
 
       - store_test_results:
-          path: ~/messenger-kafka/results/tests
+          path: ~/messenger-kafka/junit.xml
 
-      - store_artifacts:
-          path:  ~/messenger-kafka/results/coverage-report
+      - store_test_results:
+          path: ~/messenger-kafka/clover.xml
+
+workflows:
+  all-versions:
+    jobs:
+      - build:
+          name: "php-7.4"
+          php-version: "7.4"
+      - build:
+          name: "php-8.1"
+          php-version: "8.1"

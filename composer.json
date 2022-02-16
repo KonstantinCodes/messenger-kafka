@@ -39,7 +39,7 @@
   "scripts": {
     "test": [
       "vendor/bin/php-cs-fixer fix -v --dry-run --stop-on-violation --using-cache=no",
-      "vendor/bin/simple-phpunit tests/Unit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover results/clover.xml"
+      "vendor/bin/simple-phpunit tests/Unit --log-junit results/tests/junit.xml"
     ]
   }
 }

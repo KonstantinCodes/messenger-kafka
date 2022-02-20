@@ -1,16 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Koco\Kafka\Messenger;
+namespace Koco\Kafka\Transport;
 
 use RdKafka\Message;
 use Symfony\Component\Messenger\Stamp\NonSendableStampInterface;
 
+/**
+ * @author Konstantin Scheumann <konstantin@konstantin.codes>
+ */
 final class KafkaMessageStamp implements NonSendableStampInterface
 {
-    /** @var Message */
-    private $message;
+    private Message $message;
 
     public function __construct(Message $message)
     {

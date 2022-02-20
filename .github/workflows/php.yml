@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
     branches: [ master ]
 
@@ -38,7 +38,7 @@ jobs:
 
       - name: Install rdkafka
         run:
-          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev
+          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev kafkacat
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.json') }}
           restore-keys: |
             ${{ runner.os }}-php-
 
@@ -68,11 +68,11 @@ jobs:
       - name: Wait for Kafka
         run: .github/workflows/wait-for-kafka.sh
 
-      - name: Unit Tests
-        run: ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml
+      - name: try to produce
+        run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json
 
-      #- name: try to produce
-      #  run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json
+      - name: Tests
+        run: MESSENGER_KAFKA_DSN=kafka://localhost:9092 ./vendor/bin/phpunit --log-junit results/tests/junit.xml
 
       # Docs: https://getcomposer.org/doc/articles/scripts.md
       #- name: Run test suite

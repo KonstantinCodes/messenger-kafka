@@ -1,18 +1,14 @@
 <?php
 
-declare(strict_types=1);
+namespace Koco\Kafka\Tests\Transport;
 
-namespace Koco\Kafka\Tests\Unit\Messenger;
-
-use Koco\Kafka\Messenger\KafkaMessageStamp;
-use Koco\Kafka\Messenger\KafkaReceiverProperties;
-use Koco\Kafka\Messenger\KafkaSenderProperties;
-use Koco\Kafka\Messenger\KafkaTransport;
-use Koco\Kafka\RdKafka\RdKafkaFactory;
+use Koco\Kafka\Transport\KafkaMessageStamp;
+use Koco\Kafka\Transport\KafkaTransport;
+use Koco\Kafka\Transport\RdKafkaFactory;
+use Koco\Kafka\Tests\Fixtures\TestMessage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\Message;
 use RdKafka\Producer as KafkaProducer;
@@ -20,72 +16,69 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
+/**
+ * @author Konstantin Scheumann <konstantin@konstantin.codes>
+ *
+ * @requires extension rdkafka
+ */
 class KafkaTransportTest extends TestCase
 {
     /** @var MockObject|LoggerInterface */
-    private $mockLogger;
+    private $logger;
 
     /** @var MockObject|SerializerInterface */
-    private $mockSerializer;
+    private $serializer;
 
     /** @var MockObject|KafkaConsumer */
-    private $mockRdKafkaConsumer;
+    private $rdKafkaConsumer;
 
     /** @var MockObject|KafkaProducer */
-    private $mockRdKafkaProducer;
+    private $rdKafkaProducer;
 
     /** @var MockObject|RdKafkaFactory */
-    private $mockRdKafkaFactory;
+    private $rdKafkaFactory;
 
     protected function setUp(): void
     {
-        $this->mockLogger = $this->createMock(LoggerInterface::class);
+        parent::setUp();
 
-        $this->mockSerializer = $this->createMock(SerializerInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->serializer = $this->createMock(SerializerInterface::class);
 
         // RdKafka
-        $this->mockRdKafkaFactory = $this->createMock(RdKafkaFactory::class);
+        $this->rdKafkaFactory = $this->createMock(RdKafkaFactory::class);
 
-        $this->mockRdKafkaConsumer = $this->createMock(KafkaConsumer::class);
-        $this->mockRdKafkaFactory
+        $this->rdKafkaConsumer = $this->createMock(KafkaConsumer::class);
+        $this->rdKafkaFactory
             ->method('createConsumer')
-            ->willReturn($this->mockRdKafkaConsumer);
+            ->willReturn($this->rdKafkaConsumer);
 
-        $this->mockRdKafkaProducer = $this->createMock(KafkaProducer::class);
-        $this->mockRdKafkaFactory
+        $this->rdKafkaProducer = $this->createMock(KafkaProducer::class);
+        $this->rdKafkaFactory
             ->method('createProducer')
-            ->willReturn($this->mockRdKafkaProducer);
+            ->willReturn($this->rdKafkaProducer);
     }
 
-    public function testConstruct()
+    public function testConstruct(): void
     {
         $transport = new KafkaTransport(
-            $this->mockLogger,
-            $this->mockSerializer,
+            $this->logger,
+            $this->serializer,
             new RdKafkaFactory(),
-            new KafkaSenderProperties(
-                new KafkaConf(),
-                'test',
-                10000,
-                10000
-            ),
-            new KafkaReceiverProperties(
-                new KafkaConf(),
-                'test',
-                10000,
-                false
-            )
+            []
         );
 
         static::assertInstanceOf(TransportInterface::class, $transport);
     }
 
-    public function testGet()
+    public function testGet(): void
     {
-        $this->mockRdKafkaConsumer->method('subscribe');
+        $this->rdKafkaConsumer
+            ->method('subscribe');
 
         $testMessage = new Message();
-        $testMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
+        $testMessage->err = \RD_KAFKA_RESP_ERR_NO_ERROR;
         $testMessage->topic_name = 'test';
         $testMessage->partition = 0;
         $testMessage->headers = [
@@ -96,11 +89,11 @@ class KafkaTransportTest extends TestCase
         $testMessage->offset = 0;
         $testMessage->timestamp = 1586861356;
 
-        $this->mockRdKafkaConsumer
+        $this->rdKafkaConsumer
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->mockSerializer->expects(static::once())
+        $this->serializer->expects(static::once())
             ->method('decode')
             ->with([
                 'body' => '{"data":null}',
@@ -109,33 +102,32 @@ class KafkaTransportTest extends TestCase
                     'Content-Type' => 'application/json',
                 ],
                 'key' => null,
+                'partition' => 0,
                 'offset' => 0,
                 'timestamp' => 1586861356,
+                'topic_name' => 'test',
             ])
             ->willReturn(new Envelope(new TestMessage()));
 
         $transport = new KafkaTransport(
-            $this->mockLogger,
-            $this->mockSerializer,
-            $this->mockRdKafkaFactory,
-            new KafkaSenderProperties(
-                new KafkaConf(),
-                'test',
-                10000,
-                10000
-            ),
-            new KafkaReceiverProperties(
-                new KafkaConf(),
-                'test',
-                10000,
-                false
-            )
+            $this->logger,
+            $this->serializer,
+            $this->rdKafkaFactory,
+            [
+                'conf' => [],
+                'consumer' => [
+                    'topics' => [
+                        'test',
+                    ],
+                    'receive_timeout' => 10000,
+                    'conf' => [],
+                ],
+            ]
         );
 
         $receivedMessages = $transport->get();
         static::assertArrayHasKey(0, $receivedMessages);
 
-        /** @var Envelope $receivedMessage */
         $receivedMessage = $receivedMessages[0];
         static::assertInstanceOf(Envelope::class, $receivedMessage);
         static::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());

@@ -1,31 +1,22 @@
 <?php
 
-declare(strict_types=1);
+namespace Koco\Kafka\Transport;
 
-namespace Koco\Kafka\Messenger;
-
-use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
+use RdKafka\Conf as KafkaConf;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
+/**
+ * @author Konstantin Scheumann <konstantin@konstantin.codes>
+ */
 class KafkaTransport implements TransportInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var RdKafkaFactory */
-    private $rdKafkaFactory;
-
-    /** @var KafkaSenderProperties */
-    private $kafkaSenderProperties;
-
-    /** @var KafkaReceiverProperties */
-    private $kafkaReceiverProperties;
+    private LoggerInterface $logger;
+    private SerializerInterface $serializer;
+    private RdKafkaFactory $rdKafkaFactory;
+    private array $options;
 
     /** @var KafkaSender */
     private $sender;
@@ -37,16 +28,19 @@ class KafkaTransport implements TransportInterface
         LoggerInterface $logger,
         SerializerInterface $serializer,
         RdKafkaFactory $rdKafkaFactory,
-        KafkaSenderProperties $kafkaSenderProperties,
-        KafkaReceiverProperties $kafkaReceiverProperties
+        array $options
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->rdKafkaFactory = $rdKafkaFactory;
-        $this->kafkaSenderProperties = $kafkaSenderProperties;
-        $this->kafkaReceiverProperties = $kafkaReceiverProperties;
+        $this->options = $options;
     }
 
+    /**
+     * @return Envelope[]
+     *
+     * @psalm-return array{0?: Envelope}
+     */
     public function get(): iterable
     {
         return $this->getReceiver()->get();
@@ -73,7 +67,8 @@ class KafkaTransport implements TransportInterface
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
-            $this->kafkaSenderProperties
+            $this->buildConf($this->options['conf'], $this->options['producer']['conf'] ?? []),
+            $this->options['producer'] ?? []
         );
     }
 
@@ -83,7 +78,20 @@ class KafkaTransport implements TransportInterface
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
-            $this->kafkaReceiverProperties
+            $this->buildConf($this->options['conf'], $this->options['consumer']['conf'] ?? []),
+            $this->options['consumer'] ?? []
         );
+    }
+
+    private function buildConf(array $baseConf, array $specificConf): KafkaConf
+    {
+        $conf = new KafkaConf();
+        $confOptions = array_merge($baseConf, $specificConf);
+
+        foreach ($confOptions as $option => $value) {
+            $conf->set($option, $value);
+        }
+
+        return $conf;
     }
 }

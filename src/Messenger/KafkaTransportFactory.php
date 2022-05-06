@@ -60,6 +60,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
         // Set a rebalance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
+        if ((int) ($options['statistics.interval.ms'] ?? 0) > 0) {
+            $conf->setStatsCb($this->logger);
+        }
 
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
@@ -123,6 +126,33 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
                 default:
                     throw new \Exception($err);
+            }
+        };
+    }
+
+    private function setStatsCb(LoggerInterface $logger): \Closure
+    {
+        return function (KafkaConsumer $kafka, string $json, int $json_len) use ($logger) {
+            try {
+                $statistics = \json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                return;
+            }
+
+            foreach ($kafka->getAssignment() as $partition) {
+                $logger->info(
+                    'Kafka: Stats on {topic}, {partition}, {offset}',
+                    [
+                        'topic' => $partition->getTopic(),
+                        'partition' => $partition->getPartition(),
+                        'offset' => $statistics['topics'][$topic]['partitions'][$partition]['committed_offset'] ?? '',
+                        'next_offset' => $statistics['topics'][$topic]['partitions'][$partition]['next_offset'] ?? '',
+                        'stored_offset' => $statistics['topics'][$topic]['partitions'][$partition]['stored_offset'] ?? '',
+                        'lo_offset' => $statistics['topics'][$topic]['partitions'][$partition]['lo_offset'] ?? '',
+                        'hi_offset' => $statistics['topics'][$topic]['partitions'][$partition]['hi_offset'] ?? '',
+                        'consumer_lag' => $statistics['topics'][$topic]['partitions'][$partition]['consumer_lag'] ?? '',
+                    ]
+                );
             }
         };
     }

@@ -64,7 +64,17 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $brokers = $this->stripProtocol($dsn);
         $conf->set('metadata.broker.list', implode(',', $brokers));
 
-        foreach (array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []) as $option => $value) {
+        $configOptions = array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []);
+
+        // Empty sasl.username should unset other sasl authentication fields
+        if (empty($configOptions['sasl.username'])) {
+            unset($configOptions['security.protocol']);
+            unset($configOptions['sasl.mechanisms']);
+            unset($configOptions['sasl.username']);
+            unset($configOptions['sasl.password']);
+        }
+
+        foreach ($configOptions as $option => $value) {
             $conf->set($option, $value);
         }
 

@@ -52,6 +52,7 @@ framework:
                 options:
                     flushTimeout: 10000
                     flushRetries: 5
+                    flushOnTerminateEvent: false
                     topic:
                         name: 'events'
                     kafka_conf:

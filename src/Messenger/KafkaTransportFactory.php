@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\EventListener\FlushOnTerminate;
 use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
@@ -37,10 +38,12 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
     public function __construct(
         RdKafkaFactory $kafkaFactory,
-        ?LoggerInterface $logger
+        ?LoggerInterface $logger,
+        ?FlushOnTerminate $flushOnTerminate,
     ) {
         $this->logger = $logger ?? new NullLogger();
         $this->kafkaFactory = $kafkaFactory;
+        $this->flushOnTerminate = $flushOnTerminate;
     }
 
     public function supports(string $dsn, array $options): bool
@@ -76,14 +79,16 @@ class KafkaTransportFactory implements TransportFactoryInterface
                 $conf,
                 $options['topic']['name'],
                 $options['flushTimeout'] ?? 10000,
-                $options['flushRetries'] ?? 0
+                $options['flushRetries'] ?? 0,
+                $options['flushOnTerminateEvent'] ?? false
             ),
             new KafkaReceiverProperties(
                 $conf,
                 $options['topic']['name'],
                 $options['receiveTimeout'] ?? 10000,
                 $options['commitAsync'] ?? false
-            )
+            ),
+            $this->flushOnTerminate
         );
     }
 

@@ -20,16 +20,21 @@ final class KafkaSenderProperties
     /** @var int */
     private $flushRetries;
 
+    /** @var bool $flushOnTerminateEvent */
+    private $flushOnTerminateEvent;
+
     public function __construct(
         KafkaConf $kafkaConf,
         string $topicName,
         int $flushTimeoutMs,
-        int $flushRetries
+        int $flushRetries,
+        bool $flushOnTerminateEvent,
     ) {
         $this->kafkaConf = $kafkaConf;
         $this->topicName = $topicName;
         $this->flushTimeoutMs = $flushTimeoutMs;
         $this->flushRetries = $flushRetries;
+        $this->flushOnTerminateEvent = $flushOnTerminateEvent;
     }
 
     public function getKafkaConf(): KafkaConf
@@ -50,5 +55,10 @@ final class KafkaSenderProperties
     public function getFlushRetries(): int
     {
         return $this->flushRetries;
+    }
+
+    public function isFlushOnTerminateEvent(): bool
+    {
+        return $this->flushOnTerminateEvent;
     }
 }

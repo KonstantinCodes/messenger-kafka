@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\EventListener\FlushOnTerminate;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use RdKafka\Producer as KafkaProducer;
@@ -18,18 +19,20 @@ class KafkaSender implements SenderInterface
     private SerializerInterface $serializer;
     private RdKafkaFactory $rdKafkaFactory;
     private KafkaSenderProperties $properties;
-    private KafkaProducer $producer;
+    private ?KafkaProducer $producer = null;
 
     public function __construct(
         LoggerInterface $logger,
         SerializerInterface $serializer,
         RdKafkaFactory $rdKafkaFactory,
-        KafkaSenderProperties $properties
+        KafkaSenderProperties $properties,
+        ?FlushOnTerminate $flushOnTerminate
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->rdKafkaFactory = $rdKafkaFactory;
         $this->properties = $properties;
+        $this->flushOnTerminate = $flushOnTerminate;
     }
 
     public function send(Envelope $envelope): Envelope
@@ -70,6 +73,10 @@ class KafkaSender implements SenderInterface
             $this->producer->poll(0);
         }
 
+        if ($this->properties->isFlushOnTerminateEvent()) {
+            return $envelope;
+        }
+
         for ($flushRetries = 0; $flushRetries < $this->properties->getFlushRetries() + 1; ++$flushRetries) {
             $code = $producer->flush($this->properties->getFlushTimeoutMs());
             if ($code === RD_KAFKA_RESP_ERR_NO_ERROR) {
@@ -87,6 +94,17 @@ class KafkaSender implements SenderInterface
 
     private function getProducer(): KafkaProducer
     {
-        return $this->producer ??= $this->rdKafkaFactory->createProducer($this->properties->getKafkaConf());
+        if (null !== $this->producer) {
+            return $this->producer;
+        }
+
+        $producer = $this->rdKafkaFactory->createProducer($this->properties->getKafkaConf());
+        $this->producer = $producer;
+
+        if ($this->properties->isFlushOnTerminateEvent()) {
+            $this->flushOnTerminate->addProducer($producer);
+        }
+
+        return $producer;
     }
 }

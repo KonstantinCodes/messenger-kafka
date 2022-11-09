@@ -18,6 +18,9 @@ Open a command console, enter your project directory and execute:
 $ composer require koco/messenger-kafka
 ```
 
+#### Note: You need to install the `ext-rdkafka` php extension for kafka connectivity
+@see Suggest in the `composer.json` 
+
 ### Applications that don't use Symfony Flex
 
 After adding the composer requirement, enable the bundle by adding it to the list of registered bundles

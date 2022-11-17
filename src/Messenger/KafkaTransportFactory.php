@@ -58,6 +58,11 @@ class KafkaTransportFactory implements TransportFactoryInterface
     {
         $conf = new KafkaConf();
 
+        $conf->setLogCb(fn ($kafka, $level, $facility, $message) => $this->logger->log($level, $message, [
+            'facility' => $facility,
+        ]));
+        $conf->setErrorCb(fn ($kafka, $err, $reason) => $this->logger->error($reason));
+
         // Set a rebalance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
 

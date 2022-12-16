@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Koco\Kafka\Tests\Functional;
 
 use Closure;
+use Koco\Kafka\Messenger\KafkaTransport;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 use Symfony\Component\Messenger\Transport\Serialization\Serializer;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
+use Symfony\Component\Messenger\Transport\TransportInterface;
 
 class KafkaTransportTest extends TestCase
 {
@@ -30,13 +33,16 @@ class KafkaTransportTest extends TestCase
 
     /** @var \DateTimeInterface */
     private $testStartTime;
+    /**
+     * @var LoggerInterface&MockObject
+     */
+    private $logger;
 
     protected function setUp(): void
     {
-        /** @var LoggerInterface $logger */
-        $logger = $this->createMock(LoggerInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
-        $this->factory = new KafkaTransportFactory(new RdKafkaFactory(), $logger);
+        $this->factory = new KafkaTransportFactory(new RdKafkaFactory(), $this->logger);
 
         $this->serializerMock = $this->createMock(SerializerInterface::class);
 
@@ -103,6 +109,7 @@ class KafkaTransportTest extends TestCase
             ],
             $this->serializerMock
         );
+        $this->assertStatsCb($receiver, '0');
 
         $this->serializerMock->expects(static::once())
             ->method('decode')
@@ -116,6 +123,31 @@ class KafkaTransportTest extends TestCase
         static::assertInstanceOf(TestMessage::class, $message);
 
         $receiver->ack($envelopes[0]);
+    }
+
+    public function testReceiverWithStatsCb()
+    {
+        $receiver = $this->factory->createTransport(
+            self::BROKER,
+            [
+                'commitAsync' => true,
+                'receiveTimeout' => 10000,
+                'topic' => [
+                    'name' => $this->getTopicName(),
+                ],
+                'kafka_conf' => [
+                    'group.id' => 'test_group',
+                    'enable.auto.offset.store' => 'false',
+                    'session.timeout.ms' => '10000',
+                ],
+                'topic_conf' => [
+                    'auto.offset.reset' => 'earliest',
+                    'statistics.interval.ms' => '10000',
+                ],
+            ],
+            $this->serializerMock
+        );
+        $this->assertStatsCb($receiver, '10000', true);
     }
 
     public function createSerializerDecodeClosure(SerializerInterface $serializer): Closure
@@ -154,5 +186,22 @@ class KafkaTransportTest extends TestCase
     private function getTopicName()
     {
         return self::TOPIC_NAME . '_' . $this->testStartTime->getTimestamp() . '_' . $this->testIteration;
+    }
+
+    private function assertStatsCb(TransportInterface $receiver, string $interval, bool $statsCb = false): void
+    {
+        $self = $this;
+        $closure = function (KafkaTransport $receiver) use ($interval, $statsCb, $self){
+            $conf = $receiver->kafkaReceiverProperties->getKafkaConf();
+            $self::assertEquals($interval, $conf->dump()['statistics.interval.ms']);
+            if ($statsCb) {
+                $self::assertArrayHasKey('stats_cb', $conf->dump());
+            } else {
+                $self::assertArrayNotHasKey('stats_cb', $conf->dump());
+            }
+        };
+
+        $doClosure = $closure->bindTo($receiver, KafkaTransport::class);
+        $doClosure($receiver);
     }
 }

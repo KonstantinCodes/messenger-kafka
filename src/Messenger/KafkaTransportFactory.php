@@ -60,8 +60,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
         // Set a rebalance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
-        if ((int) ($options['statistics.interval.ms'] ?? 0) > 0) {
-            $conf->setStatsCb($this->logger);
+        // Set a statistics callback to log partition statistics (optional)
+        if ((int) ($options['topic_conf']['statistics.interval.ms'] ?? 0) > 0) {
+            $conf->setStatsCb($this->setStatsCb($this->logger));
         }
 
         $brokers = $this->stripProtocol($dsn);
@@ -140,10 +141,12 @@ class KafkaTransportFactory implements TransportFactoryInterface
             }
 
             foreach ($kafka->getAssignment() as $partition) {
+                $topic = $partition->getTopic();
                 $logger->info(
                     'Kafka: Stats on {topic}, {partition}, {offset}',
                     [
-                        'topic' => $partition->getTopic(),
+                        'json_len' => $json_len,
+                        'topic' => $topic,
                         'partition' => $partition->getPartition(),
                         'offset' => $statistics['topics'][$topic]['partitions'][$partition]['committed_offset'] ?? '',
                         'next_offset' => $statistics['topics'][$topic]['partitions'][$partition]['next_offset'] ?? '',

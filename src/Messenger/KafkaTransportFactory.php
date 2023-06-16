@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Messenger;
 
+use RdKafka;
 use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
@@ -56,30 +57,21 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
-        $conf = new KafkaConf();
-
-        // Set a rebalance callback to log partition assignments (optional)
-        $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
-
-        $brokers = $this->stripProtocol($dsn);
-        $conf->set('metadata.broker.list', implode(',', $brokers));
-
-        foreach (array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []) as $option => $value) {
-            $conf->set($option, $value);
-        }
+        $senderKafkaConf = $this->createSenderKafkaConf($dsn, $options);
+        $receiverKafkaConf = $this->createReceiverKafkaConf($dsn, $options);
 
         return new KafkaTransport(
             $this->logger,
             $serializer,
             $this->kafkaFactory,
             new KafkaSenderProperties(
-                $conf,
+                $senderKafkaConf,
                 $options['topic']['name'],
                 $options['flushTimeout'] ?? 10000,
                 $options['flushRetries'] ?? 0
             ),
             new KafkaReceiverProperties(
-                $conf,
+                $receiverKafkaConf,
                 $options['topic']['name'],
                 $options['receiveTimeout'] ?? 10000,
                 $options['commitAsync'] ?? false
@@ -125,5 +117,42 @@ class KafkaTransportFactory implements TransportFactoryInterface
                     throw new \Exception($err);
             }
         };
+    }
+
+    private function createReceiverKafkaConf(string $dsn, array $options): KafkaConf
+    {
+        $conf = $this->createKafkaConf($dsn, array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []));
+
+        // Set a rebalance callback to log partition assignments (optional)
+        $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
+
+        return $conf;
+    }
+
+    private function createSenderKafkaConf(string $dsn, array $options): KafkaConf
+    {
+        return $this->createKafkaConf($dsn, $options['kafka_conf'] ?? []);
+    }
+
+    private function createKafkaConf(string $dsn, array $configuration): KafkaConf
+    {
+        $conf = new KafkaConf();
+
+        $brokers = $this->stripProtocol($dsn);
+        $conf->set('metadata.broker.list', implode(',', $brokers));
+
+        foreach ($configuration as $key => $value) {
+            $conf->set($key, $value);
+        }
+
+        $conf->setLogCb(function (RdKafka $kafka, int $level, string $facility, string $message) {
+            $this->logger->log($level, $message, ['facility' => $facility]);
+        });
+
+        $conf->setErrorCb(function (RdKafka $kafka, int $err, string $reason) {
+            $this->logger->error(rd_kafka_err2str($err) . '. Reason: ' . $reason);
+        });
+
+        return $conf;
     }
 }

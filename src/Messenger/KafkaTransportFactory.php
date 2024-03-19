@@ -144,6 +144,14 @@ class KafkaTransportFactory implements TransportFactoryInterface
         if (isset($parsedUrl['query'])) {
             parse_str($parsedUrl['query'], $dsnOptions);
 
+            if (isset($dsnOptions['flushTimeout'])) {
+                $dsnOptions['flushTimeout'] = filter_var($dsnOptions['flushTimeout'], FILTER_VALIDATE_INT);
+            }
+
+            if (isset($dsnOptions['flushRetries'])) {
+                $dsnOptions['flushRetries'] = filter_var($dsnOptions['flushRetries'], FILTER_VALIDATE_INT);
+            }
+
             if (isset($dsnOptions['receiveTimeout'])) {
                 $dsnOptions['receiveTimeout'] = filter_var($dsnOptions['receiveTimeout'], FILTER_VALIDATE_INT);
             }

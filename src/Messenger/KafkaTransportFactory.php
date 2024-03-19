@@ -43,6 +43,11 @@ class KafkaTransportFactory implements TransportFactoryInterface
         $this->kafkaFactory = $kafkaFactory;
     }
 
+    /**
+     * @param string $dsn
+     * @param array<string, scalar> $options
+     * @return bool
+     */
     public function supports(string $dsn, array $options): bool
     {
         foreach (self::DSN_PROTOCOLS as $protocol) {
@@ -54,14 +59,32 @@ class KafkaTransportFactory implements TransportFactoryInterface
         return false;
     }
 
+    /**
+     * @param array<string, scalar> $options
+     */
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
+        unset($options['transport_name']);
+
         $conf = new KafkaConf();
 
         // Set a rebalance callback to log partition assignments (optional)
         $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
 
-        $brokers = $this->stripProtocol($dsn);
+        $dsns = explode(',', $dsn);
+
+        $parsedUrls = array_map(
+            static fn (string $dsn) => self::parseDsn($dsn, $options),
+            $dsns
+        );
+
+        $brokers = array_map(
+            static fn ($value) => $value['broker'],
+            $parsedUrls
+        );
+
+        $options = array_merge(...$parsedUrls)['options'];
+
         $conf->set('metadata.broker.list', implode(',', $brokers));
 
         foreach (array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []) as $option => $value) {
@@ -87,17 +110,59 @@ class KafkaTransportFactory implements TransportFactoryInterface
         );
     }
 
-    private function stripProtocol(string $dsn): array
+    /**
+     * @param string $dsn
+     * @param array<string, scalar> $kafkaOptions
+     * @return array{
+     *     scheme: string,
+     *     host: string,
+     *     port: int,
+     *     broker: string,
+     *     query: string,
+     *     options: array<string, scalar>
+     * }
+     */
+    private static function parseDsn(string $dsn, array $kafkaOptions): array
     {
-        $brokers = [];
-        foreach (explode(',', $dsn) as $currentBroker) {
-            foreach (self::DSN_PROTOCOLS as $protocol) {
-                $currentBroker = str_replace($protocol, '', $currentBroker);
+        $url = null;
+        foreach (self::DSN_PROTOCOLS as $protocol) {
+            if (0 === strpos($dsn, $protocol)) {
+                $url = $dsn;
+                break;
             }
-            $brokers[] = $currentBroker;
         }
 
-        return $brokers;
+        if (null === $url || false === $parsedUrl = parse_url($url)) {
+            throw new \InvalidArgumentException(sprintf('The given Kafka DSN "%s" is invalid.', $dsn));
+        }
+
+        $parsedUrl['broker'] = $parsedUrl['host'].':'.$parsedUrl['port'];
+
+        $dsnOptions = [];
+
+        if (isset($parsedUrl['query'])) {
+            parse_str($parsedUrl['query'], $dsnOptions);
+
+            if (isset($dsnOptions['flushTimeout'])) {
+                $dsnOptions['flushTimeout'] = filter_var($dsnOptions['flushTimeout'], FILTER_VALIDATE_INT);
+            }
+
+            if (isset($dsnOptions['flushRetries'])) {
+                $dsnOptions['flushRetries'] = filter_var($dsnOptions['flushRetries'], FILTER_VALIDATE_INT);
+            }
+
+            if (isset($dsnOptions['receiveTimeout'])) {
+                $dsnOptions['receiveTimeout'] = filter_var($dsnOptions['receiveTimeout'], FILTER_VALIDATE_INT);
+            }
+
+            if (isset($dsnOptions['commitAsync'])) {
+                $dsnOptions['commitAsync'] = filter_var($dsnOptions['commitAsync'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+
+        $parsedUrl['options'] = array_merge($kafkaOptions, $dsnOptions);
+
+        return $parsedUrl;
     }
 
     private function createRebalanceCb(LoggerInterface $logger): \Closure

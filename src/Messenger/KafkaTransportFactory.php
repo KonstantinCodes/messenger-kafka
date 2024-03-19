@@ -8,7 +8,6 @@ use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use function PHPStan\dumpType;
 use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
 use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;

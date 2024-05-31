@@ -5,11 +5,15 @@
         http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="Koco\Kafka\EventListener\FlushOnTerminate" class="Koco\Kafka\EventListener\FlushOnTerminate" public="false">
+            <tag name="kernel.event_subscriber"/>
+        </service>
         <service id="Koco\Kafka\RdKafka\RdKafkaFactory" class="Koco\Kafka\RdKafka\RdKafkaFactory" public="false" />
         <service id="Koco\Kafka\Messenger\KafkaTransportFactory" class="Koco\Kafka\Messenger\KafkaTransportFactory" public="false">
             <tag name="messenger.transport_factory"/>
             <argument type="service" id="Koco\Kafka\RdKafka\RdKafkaFactory"/>
             <argument type="service" id="logger" on-invalid="null"/>
+            <argument type="service" id="Koco\Kafka\EventListener\FlushOnTerminate" on-invalid="null"/>
         </service>
         <service id="Koco\Kafka\Messenger\RestProxyTransportFactory" class="Koco\Kafka\Messenger\RestProxyTransportFactory" public="false">
             <tag name="messenger.transport_factory"/>

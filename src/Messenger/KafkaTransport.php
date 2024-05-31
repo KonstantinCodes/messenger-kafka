@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Messenger;
 
+use Koco\Kafka\EventListener\FlushOnTerminate;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -38,13 +39,15 @@ class KafkaTransport implements TransportInterface
         SerializerInterface $serializer,
         RdKafkaFactory $rdKafkaFactory,
         KafkaSenderProperties $kafkaSenderProperties,
-        KafkaReceiverProperties $kafkaReceiverProperties
+        KafkaReceiverProperties $kafkaReceiverProperties,
+        ?FlushOnTerminate $flushOnTerminate
     ) {
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->rdKafkaFactory = $rdKafkaFactory;
         $this->kafkaSenderProperties = $kafkaSenderProperties;
         $this->kafkaReceiverProperties = $kafkaReceiverProperties;
+        $this->flushOnTerminate = $flushOnTerminate;
     }
 
     public function get(): iterable
@@ -73,7 +76,8 @@ class KafkaTransport implements TransportInterface
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
-            $this->kafkaSenderProperties
+            $this->kafkaSenderProperties,
+            $this->flushOnTerminate,
         );
     }
 

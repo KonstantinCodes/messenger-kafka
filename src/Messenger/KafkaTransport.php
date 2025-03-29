@@ -7,10 +7,11 @@ namespace Koco\Kafka\Messenger;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Transport\Receiver\MessageCountAwareInterface;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
 
-class KafkaTransport implements TransportInterface
+class KafkaTransport implements TransportInterface, MessageCountAwareInterface
 {
     /** @var LoggerInterface */
     private $logger;
@@ -85,5 +86,39 @@ class KafkaTransport implements TransportInterface
             $this->rdKafkaFactory,
             $this->kafkaReceiverProperties
         );
+    }
+
+    public function getMessageCount(): int
+    {
+        $consumer = $this->rdKafkaFactory->createConsumer($this->kafkaReceiverProperties->getKafkaConf());
+        $metadata = $consumer->getMetadata(false, null, 60 * 1000);
+        $topics = $metadata->getTopics();
+        $topicName = $this->kafkaReceiverProperties->getTopicName();
+
+        $lag = 0;
+        foreach ($topics as $topic) {
+            if ($topic->getTopic() !== $topicName) {
+                continue;
+            }
+
+            foreach ($topic->getPartitions() as $partition) {
+                $partitionId = $partition->getId();
+
+                $lowOffset = $highOffset = 0;
+                $consumer->queryWatermarkOffsets($topicName, $partitionId, $lowOffset, $highOffset, 1000);
+
+                $committedOffsets = $consumer->getCommittedOffsets(
+                    [new \RdKafka\TopicPartition($topicName, $partitionId)],
+                    1000
+                );
+
+                $committedOffset = $committedOffsets[0]->getOffset();
+                if ($committedOffset >= 0) {
+                    $lag += $highOffset - $committedOffset;
+                }
+            }
+        }
+
+        return $lag;
     }
 }

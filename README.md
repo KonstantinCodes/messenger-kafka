@@ -159,3 +159,41 @@ avro_regy:
 ```
 
 Please see [https://github.com/KonstantinCodes/avro-regy](https://github.com/KonstantinCodes/avro-regy) for the full documentation.
+
+
+## Multiple Topics Support for consumer
+```yaml
+framework:
+    messenger:
+        transports:
+            multi_topic_consumer:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    topic:
+                        name: ['topic-1', 'topic-2', 'topic-3']  # Array of topics
+                    kafka_conf:
+                        group.id: 'my-consumer-group'
+                        enable.auto.offset.store: 'false'
+```
+
+Backward compatibiliy: Single topic configuration continues top work as before:
+```yaml
+framework:
+    messenger:
+        transports:
+            consumer:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    topic:
+                        name: "events"
+                    kafka_conf:
+                        group.id: 'my-consumer-group'
+                        enable.auto.offset.store: 'false'
+```
+
+
+### Produce Multiples Topics
+If you want to use a producer with multiple topics, you can:
+
+1. Create your own Kafka producer instance.
+2. Customize the transport to pass the target topic as part of the sender properties.

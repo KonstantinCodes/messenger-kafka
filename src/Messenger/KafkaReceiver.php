@@ -113,7 +113,9 @@ class KafkaReceiver implements ReceiverInterface
 
         if (false === $this->subscribed) {
             $this->logger->info('Partition assignment...');
-            $consumer->subscribe([$this->properties->getTopicName()]);
+            $consumer->subscribe(is_array($this->properties->getTopicName())
+                    ? $this->properties->getTopicName()
+                    : [$this->properties->getTopicName()]);
 
             $this->subscribed = true;
         }

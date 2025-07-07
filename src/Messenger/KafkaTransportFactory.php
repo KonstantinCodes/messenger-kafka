@@ -68,19 +68,22 @@ class KafkaTransportFactory implements TransportFactoryInterface
             $conf->set($option, $value);
         }
 
+
+        $topicName = $options['topic']['name'];
+
         return new KafkaTransport(
             $this->logger,
             $serializer,
             $this->kafkaFactory,
             new KafkaSenderProperties(
                 $conf,
-                $options['topic']['name'],
+                is_array($topicName) ? $topicName[0] : $topicName,
                 $options['flushTimeout'] ?? 10000,
                 $options['flushRetries'] ?? 0
             ),
             new KafkaReceiverProperties(
                 $conf,
-                $options['topic']['name'],
+                $topicName,
                 $options['receiveTimeout'] ?? 10000,
                 $options['commitAsync'] ?? false
             )

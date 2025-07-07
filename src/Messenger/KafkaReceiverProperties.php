@@ -11,7 +11,7 @@ final class KafkaReceiverProperties
     /** @var KafkaConf */
     private $kafkaConf;
 
-    /** @var string */
+    /** @var string|array */
     private $topicName;
 
     /** @var int */
@@ -22,7 +22,7 @@ final class KafkaReceiverProperties
 
     public function __construct(
         KafkaConf $kafkaConf,
-        string $topicName,
+        string|array $topicName,
         int $receiveTimeoutMs,
         bool $commitAsync
     ) {
@@ -37,7 +37,7 @@ final class KafkaReceiverProperties
         return $this->kafkaConf;
     }
 
-    public function getTopicName(): string
+    public function getTopicName(): string|array
     {
         return $this->topicName;
     }

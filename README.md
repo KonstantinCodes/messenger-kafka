@@ -159,3 +159,168 @@ avro_regy:
 ```
 
 Please see [https://github.com/KonstantinCodes/avro-regy](https://github.com/KonstantinCodes/avro-regy) for the full documentation.
+
+
+## Multiple Topics Support
+```yaml
+framework:
+    messenger:
+        transports:
+            multi_topic_consumer:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    topic:
+                        name: ['topic-1', 'topic-2', 'topic-3']  # Array of topics
+                    kafka_conf:
+                        group.id: 'my-consumer-group'
+                        enable.auto.offset.store: 'false'
+```
+
+Backward compatibiliy: Single topic configuration continues top work as before:
+```yaml
+framework:
+    messenger:
+        transports:
+            consumer:
+                dsn: '%env(KAFKA_URL)%'
+                options:
+                    topic:
+                        name: "events"
+                    kafka_conf:
+                        group.id: 'my-consumer-group'
+                        enable.auto.offset.store: 'false'
+```
+
+
+### Producing to Multiple Topics:
+For sending messages to different topics dynamically, you need to implement a custom solution:
+
+You create a KafkaTransportFactory that implements TransportFactoryInterface that returns your custom KafkaTransport. 
+
+
+The factory returns TransportKafka configured to send messages to the correct topic.
+## 1. Create A Topic Stamp
+
+```php
+<?php
+
+namespace K2K\Context\Common\Context\CommandBus\Stamp;
+
+use Symfony\Component\Messenger\Stamp\StampInterface;
+
+class KafkaTopicStamp implements StampInterface
+{
+    private string $topic;
+
+    public function __construct(string $topic)
+    {
+        $this->topic = $topic;
+    }
+
+    public function getTopic(): string
+    {
+        return $this->topic;
+    }
+
+}
+```
+
+## 2. Customn Transport
+
+You Create KafkaTransportFactory to return the TransportKafka customize
+
+You need to send to the kafkaSender.php the properties with the topic that you want to send the event. 
+
+``` php
+
+#[AllowDynamicProperties]
+class TransportKafka implements TransportInterface
+{
+    private LoggerInterface $logger;
+    private SerializerInterface $serializer;
+    private RdKafkaFactory $rdKafkaFactory;
+    private KafkaSenderProperties $kafkaSenderProperties;
+    private MultipleTopicsKafkaReceiverProperties $multipleTopicsKafkaReceiverProperties;
+    
+    // ✅ Cache de senders por topic
+    private array $senders = [];
+    private ?MultipleTopicsKafkaReceiver $receiver = null;
+
+    public function __construct(
+        LoggerInterface $logger,
+        SerializerInterface $serializer,
+        RdKafkaFactory $rdKafkaFactory,
+        KafkaSenderProperties $kafkaSenderProperties,
+        MultipleTopicsKafkaReceiverProperties $multipleTopicsKafkaReceiverProperties
+    ) {
+        $this->logger = $logger;
+        $this->serializer = $serializer;
+        $this->rdKafkaFactory = $rdKafkaFactory;
+        $this->kafkaSenderProperties = $kafkaSenderProperties;
+        $this->multipleTopicsKafkaReceiverProperties = $multipleTopicsKafkaReceiverProperties;
+    }
+
+    public function send(Envelope $envelope): Envelope
+    {
+        $topicStamp = $envelope->last(KafkaTopicStamp::class);
+
+        if ($topicStamp === null) {
+            throw new InvalidArgumentException('KafkaTopicStamp is required but not found in the envelope');
+        }
+
+        return $this->getSender($topicStamp->getTopic())->send($envelope);
+    }
+
+    public function get(): iterable
+    {
+        return $this->getReceiver()->get();
+    }
+
+    public function ack(Envelope $envelope): void
+    {
+        $this->getReceiver()->ack($envelope);
+    }
+
+    public function reject(Envelope $envelope): void
+    {
+        $this->getReceiver()->reject($envelope);
+    }
+
+    // 
+    private function getSender(string $topic): KafkaSender
+    {
+        if (!isset($this->senders[$topic])) {
+            $this->senders[$topic] = new KafkaSender(
+                $this->logger,
+                $this->serializer,
+                $this->rdKafkaFactory,
+                new KafkaSenderProperties(
+                    $this->kafkaSenderProperties->getKafkaConf(),
+                    $topic, //Topic específico
+                    $this->kafkaSenderProperties->getFlushTimeoutMs(),
+                    $this->kafkaSenderProperties->getFlushRetries()
+                )
+            );
+        }
+
+        return $this->senders[$topic];
+    }
+
+    private function getReceiver(): MultipleTopicsKafkaReceiver
+        {
+                return $this->receiver ??= new MultipleTopicsKafkaReceiver(
+                            $this->logger,
+                                        $this->serializer,
+                                                    $this->rdKafkaFactory,
+                                                                $this->multipleTopicsKafkaReceiverProperties,
+                                                                        );
+                                                                            }
+}
+```
+
+And you send the message on the code using:
+``` php
+ $this->bus->dispatch(new Envelope(
+                    $message,
+                    [ new KafkaTopicStamp($topic) ]));
+```

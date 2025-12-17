@@ -31,9 +31,9 @@ class KafkaTransportFactoryTest extends TestCase
 
     public function testSupports()
     {
-        static::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
-        static::assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
-        static::assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
+        self::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
+        self::assertTrue($this->factory->supports('kafka+ssl://my-staging-kafka:9093', []));
+        self::assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
     }
 
     /**
@@ -54,6 +54,6 @@ class KafkaTransportFactoryTest extends TestCase
             $this->serializerMock
         );
 
-        static::assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 }

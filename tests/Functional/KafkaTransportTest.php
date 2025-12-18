@@ -56,62 +56,62 @@ class KafkaTransportTest extends TestCase
     /**
      * @dataProvider provideSerializer
      */
-//    public function testSendAndReceive(SerializerInterface $serializer, \Closure $decodeClosure)
-//    {
-//        $sender = $this->factory->createTransport(
-//            self::BROKER,
-//            [
-//                'flushTimeout' => 5000,
-//                'flushRetries' => 5,
-//                'topic' => [
-//                    'name' => $this->getTopicName(),
-//                ],
-//                'kafka_conf' => [],
-//            ],
-//            $serializer
-//        );
-//
-//        $envelope = Envelope::wrap(new TestMessage('my_test_data'), []);
-//
-//        $sender->send($envelope);
-//
-//        $receiver = $this->factory->createTransport(
-//            self::BROKER,
-//            [
-//                'commitAsync' => true,
-//                'receiveTimeout' => 10000,
-//                'topic' => [
-//                    'name' => $this->getTopicName(),
-//                ],
-//                'kafka_conf' => [
-//                    'group.id' => 'test_group',
-//                    'enable.auto.offset.store' => 'false',
-//                    'session.timeout.ms' => '10000',
-//                ],
-//                'topic_conf' => [
-//                    'auto.offset.reset' => 'earliest',
-//                ],
-//            ],
-//            $this->serializerMock
-//        );
-//
-//        $this->serializerMock->expects(self::once())
-//            ->method('decode')
-//            ->willReturnCallback($decodeClosure);
-//
-//        /** @var []Envelope $envelopes */
-//        $envelopes = $receiver->get();
-//        self::assertInstanceOf(Envelope::class, $envelopes[0]);
-//
-//        $message = $envelopes[0]->getMessage();
-//        self::assertInstanceOf(TestMessage::class, $message);
-//
-//        $receiver->ack($envelopes[0]);
-//    }
+    public function testSendAndReceive(SerializerInterface $serializer, \Closure $decodeClosure)
+    {
+        $sender = $this->factory->createTransport(
+            self::BROKER,
+            [
+                'flushTimeout' => 5000,
+                'flushRetries' => 5,
+                'topic' => [
+                    'name' => $this->getTopicName(),
+                ],
+                'kafka_conf' => [],
+            ],
+            $serializer
+        );
+
+        $envelope = Envelope::wrap(new TestMessage('my_test_data'), []);
+
+        $sender->send($envelope);
+
+        $receiver = $this->factory->createTransport(
+            self::BROKER,
+            [
+                'commitAsync' => true,
+                'receiveTimeout' => 10000,
+                'topic' => [
+                    'name' => $this->getTopicName(),
+                ],
+                'kafka_conf' => [
+                    'group.id' => 'test_group',
+                    'enable.auto.offset.store' => 'false',
+                    'session.timeout.ms' => '10000',
+                ],
+                'topic_conf' => [
+                    'auto.offset.reset' => 'earliest',
+                ],
+            ],
+            $this->serializerMock
+        );
+
+        $this->serializerMock->expects(self::once())
+            ->method('decode')
+            ->willReturnCallback($decodeClosure);
+
+        /** @var []Envelope $envelopes */
+        $envelopes = $receiver->get();
+        self::assertInstanceOf(Envelope::class, $envelopes[0]);
+
+        $message = $envelopes[0]->getMessage();
+        self::assertInstanceOf(TestMessage::class, $message);
+
+        $receiver->ack($envelopes[0]);
+    }
 
     public static function createSerializerDecodeClosure(SerializerInterface $serializer): \Closure
     {
-        return function (array $encodedEnvelope) use ($serializer) {
+        return static function (array $encodedEnvelope) use ($serializer) {
             self::assertIsArray($encodedEnvelope);
 
             self::assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
@@ -128,7 +128,7 @@ class KafkaTransportTest extends TestCase
 
     public static function createPHPSerializerDecodeClosure(SerializerInterface $serializer): \Closure
     {
-        return function (array $encodedEnvelope) use ($serializer) {
+        return static function (array $encodedEnvelope) use ($serializer) {
             self::assertIsArray($encodedEnvelope);
 
             self::assertSame(

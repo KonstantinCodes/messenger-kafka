@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Tests\Functional;
 
-use Closure;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use PHPUnit\Framework\TestCase;
@@ -45,27 +44,19 @@ class KafkaTransportTest extends TestCase
         $this->testStartTime = $this->testStartTime ?? new \DateTimeImmutable();
     }
 
-    public function serializerProvider()
+    public static function provideSerializer(): \Generator
     {
         $serializer = new Serializer();
         $phpSerializer = new PhpSerializer();
 
-        return [
-            [
-                $serializer,
-                $this->createSerializerDecodeClosure($serializer),
-            ],
-            [
-                $phpSerializer,
-                $this->createPHPSerializerDecodeClosure($phpSerializer),
-            ],
-        ];
+        yield [$serializer, self::createSerializerDecodeClosure($serializer)];
+        yield [$phpSerializer, self::createPHPSerializerDecodeClosure($phpSerializer)];
     }
 
     /**
-     * @dataProvider serializerProvider
+     * @dataProvider provideSerializer
      */
-    public function testSendAndReceive(SerializerInterface $serializer, Closure $decodeClosure)
+    public function testSendAndReceive(SerializerInterface $serializer, \Closure $decodeClosure)
     {
         $sender = $this->factory->createTransport(
             self::BROKER,
@@ -104,48 +95,48 @@ class KafkaTransportTest extends TestCase
             $this->serializerMock
         );
 
-        $this->serializerMock->expects(static::once())
+        $this->serializerMock->expects(self::once())
             ->method('decode')
             ->willReturnCallback($decodeClosure);
 
         /** @var []Envelope $envelopes */
         $envelopes = $receiver->get();
-        static::assertInstanceOf(Envelope::class, $envelopes[0]);
+        self::assertInstanceOf(Envelope::class, $envelopes[0]);
 
         $message = $envelopes[0]->getMessage();
-        static::assertInstanceOf(TestMessage::class, $message);
+        self::assertInstanceOf(TestMessage::class, $message);
 
         $receiver->ack($envelopes[0]);
     }
 
-    public function createSerializerDecodeClosure(SerializerInterface $serializer): Closure
+    public static function createSerializerDecodeClosure(SerializerInterface $serializer): \Closure
     {
-        return function (array $encodedEnvelope) use ($serializer) {
-            $this->assertIsArray($encodedEnvelope);
+        return static function (array $encodedEnvelope) use ($serializer) {
+            self::assertIsArray($encodedEnvelope);
 
-            $this->assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
+            self::assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
 
-            $this->assertArrayHasKey('headers', $encodedEnvelope);
+            self::assertArrayHasKey('headers', $encodedEnvelope);
             $headers = $encodedEnvelope['headers'];
 
-            $this->assertSame(TestMessage::class, $headers['type']);
-            $this->assertSame('application/json', $headers['Content-Type']);
+            self::assertSame(TestMessage::class, $headers['type']);
+            self::assertSame('application/json', $headers['Content-Type']);
 
             return $serializer->decode($encodedEnvelope);
         };
     }
 
-    public function createPHPSerializerDecodeClosure(SerializerInterface $serializer): Closure
+    public static function createPHPSerializerDecodeClosure(SerializerInterface $serializer): \Closure
     {
-        return function (array $encodedEnvelope) use ($serializer) {
-            $this->assertIsArray($encodedEnvelope);
+        return static function (array $encodedEnvelope) use ($serializer) {
+            self::assertIsArray($encodedEnvelope);
 
-            $this->assertSame(
+            self::assertSame(
                 'O:36:\"Symfony\\\\Component\\\\Messenger\\\\Envelope\":2:{s:44:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0stamps\";a:0:{}s:45:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0message\";O:39:\"Koco\\\\Kafka\\\\Tests\\\\Functional\\\\TestMessage\":1:{s:4:\"data\";s:12:\"my_test_data\";}}',
                 $encodedEnvelope['body']
             );
 
-            $this->assertArrayHasKey('headers', $encodedEnvelope);
+            self::assertArrayHasKey('headers', $encodedEnvelope);
 
             return $serializer->decode($encodedEnvelope);
         };

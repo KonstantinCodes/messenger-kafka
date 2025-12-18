@@ -54,9 +54,6 @@ class RestProxySender implements SenderInterface
         $this->streamFactory = $streamFactory;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(Envelope $envelope): Envelope
     {
         $encoded = $this->serializer->encode($envelope);

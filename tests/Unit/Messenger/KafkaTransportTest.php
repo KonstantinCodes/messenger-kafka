@@ -77,7 +77,7 @@ class KafkaTransportTest extends TestCase
             )
         );
 
-        static::assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 
     public function testGet()
@@ -100,7 +100,7 @@ class KafkaTransportTest extends TestCase
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->mockSerializer->expects(static::once())
+        $this->mockSerializer->expects(self::once())
             ->method('decode')
             ->with([
                 'body' => '{"data":null}',
@@ -133,22 +133,22 @@ class KafkaTransportTest extends TestCase
         );
 
         $receivedMessages = $transport->get();
-        static::assertArrayHasKey(0, $receivedMessages);
+        self::assertArrayHasKey(0, $receivedMessages);
 
         /** @var Envelope $receivedMessage */
         $receivedMessage = $receivedMessages[0];
-        static::assertInstanceOf(Envelope::class, $receivedMessage);
-        static::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
+        self::assertInstanceOf(Envelope::class, $receivedMessage);
+        self::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
 
         $stamps = $receivedMessage->all();
-        static::assertCount(1, $stamps);
-        static::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
+        self::assertCount(1, $stamps);
+        self::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
 
         $kafkaMessageStamps = $stamps[KafkaMessageStamp::class];
-        static::assertCount(1, $kafkaMessageStamps);
+        self::assertCount(1, $kafkaMessageStamps);
 
         /** @var KafkaMessageStamp $kafkaMessageStamp */
         $kafkaMessageStamp = $kafkaMessageStamps[0];
-        static::assertSame($testMessage, $kafkaMessageStamp->getMessage());
+        self::assertSame($testMessage, $kafkaMessageStamp->getMessage());
     }
 }

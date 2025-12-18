@@ -33,9 +33,9 @@ class KafkaRestProxySenderTest extends TestCase
             $psr17Factory
         );
 
-        //$sender->send()
+        // $sender->send()
 
-        static::assertTrue(true);
+        self::assertTrue(true);
     }
 }
 

@@ -4,18 +4,12 @@ declare(strict_types=1);
 
 namespace Koco\Kafka\Messenger;
 
-use function explode;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use const RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS;
-use const RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS;
 use RdKafka\Conf as KafkaConf;
 use RdKafka\KafkaConsumer;
 use RdKafka\TopicPartition;
-use function sprintf;
-use function str_replace;
-use function strpos;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 use Symfony\Component\Messenger\Transport\TransportFactoryInterface;
 use Symfony\Component\Messenger\Transport\TransportInterface;
@@ -46,7 +40,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
     public function supports(string $dsn, array $options): bool
     {
         foreach (self::DSN_PROTOCOLS as $protocol) {
-            if (0 === strpos($dsn, $protocol)) {
+            if (0 === \strpos($dsn, $protocol)) {
                 return true;
             }
         }
@@ -90,9 +84,9 @@ class KafkaTransportFactory implements TransportFactoryInterface
     private function stripProtocol(string $dsn): array
     {
         $brokers = [];
-        foreach (explode(',', $dsn) as $currentBroker) {
+        foreach (\explode(',', $dsn) as $currentBroker) {
             foreach (self::DSN_PROTOCOLS as $protocol) {
-                $currentBroker = str_replace($protocol, '', $currentBroker);
+                $currentBroker = \str_replace($protocol, '', $currentBroker);
             }
             $brokers[] = $currentBroker;
         }
@@ -102,21 +96,21 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
     private function createRebalanceCb(LoggerInterface $logger): \Closure
     {
-        return function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
+        return static function (KafkaConsumer $kafka, $err, ?array $topicPartitions = null) use ($logger) {
             /** @var TopicPartition[] $topicPartitions */
             $topicPartitions = $topicPartitions ?? [];
 
             switch ($err) {
-                case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
+                case \RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
                     foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                        $logger->info(\sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
                     $kafka->assign($topicPartitions);
                     break;
 
-                case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
+                case \RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
                     foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                        $logger->info(\sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
                     $kafka->assign(null);
                     break;

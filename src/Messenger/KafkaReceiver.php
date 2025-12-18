@@ -41,7 +41,7 @@ class KafkaReceiver implements ReceiverInterface
 
         switch ($message->err) {
             case RD_KAFKA_RESP_ERR_NO_ERROR:
-                $this->logger->info(sprintf(
+                $this->logger->info(\sprintf(
                     'Kafka: Message %s %s %s received ',
                     $message->topic_name,
                     $message->partition,
@@ -84,7 +84,7 @@ class KafkaReceiver implements ReceiverInterface
         if ($this->properties->isCommitAsync()) {
             $consumer->commitAsync($message);
 
-            $this->logger->info(sprintf(
+            $this->logger->info(\sprintf(
                 'Offset topic=%s partition=%s offset=%s to be committed asynchronously.',
                 $message->topic_name,
                 $message->partition,
@@ -93,7 +93,7 @@ class KafkaReceiver implements ReceiverInterface
         } else {
             $consumer->commit($message);
 
-            $this->logger->info(sprintf(
+            $this->logger->info(\sprintf(
                 'Offset topic=%s partition=%s offset=%s successfully committed.',
                 $message->topic_name,
                 $message->partition,

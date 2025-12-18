@@ -10,10 +10,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php:
-          - "7.4"
-          - "8.1"
+        php: ['8.3', '8.4', '8.5']
+        symfony: ['^6.4', '^7.3', '^7.4', '^8.0']
+        exclude:
+          - php: '8.3'
+            symfony: '^8.0'
+          - php: '8.3'
+            symfony: '^7.4'
 
     services:
       kafka:
@@ -38,7 +43,7 @@ jobs:
 
       - name: Install rdkafka
         run:
-          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev
+          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat-traditional librdkafka1 librdkafka-dev
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -52,18 +57,12 @@ jobs:
       - name: check if rdkafka is there
         run: php -v && php --ri rdkafka
 
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v2
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-
-
       - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer update --prefer-dist --no-progress
+        run: |
+          composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^2.4"
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer config extra.symfony.require "${{ matrix.symfony }}"
+          composer update --prefer-dist --no-progress
 
       - name: Wait for Kafka
         run: .github/workflows/wait-for-kafka.sh

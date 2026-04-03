@@ -15,26 +15,13 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class RestProxySender implements SenderInterface
 {
-    /** @var UriInterface */
-    private $baseUri;
-
-    /** @var string */
-    private $topicName;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var ClientInterface */
-    private $client;
-
-    /** @var RequestFactoryInterface */
-    private $requestFactory;
-
-    /** @var UriFactoryInterface */
-    private $uriFactory;
-
-    /** @var StreamFactoryInterface */
-    private $streamFactory;
+    private UriInterface $baseUri;
+    private string $topicName;
+    private SerializerInterface $serializer;
+    private ClientInterface $client;
+    private RequestFactoryInterface $requestFactory;
+    private UriFactoryInterface $uriFactory;
+    private StreamFactoryInterface $streamFactory;
 
     public function __construct(
         UriInterface $baseUri,
@@ -54,9 +41,6 @@ class RestProxySender implements SenderInterface
         $this->streamFactory = $streamFactory;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(Envelope $envelope): Envelope
     {
         $encoded = $this->serializer->encode($envelope);

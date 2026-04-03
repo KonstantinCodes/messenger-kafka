@@ -38,37 +38,16 @@ class KafkaSender implements SenderInterface
         $topic = $producer->newTopic($this->properties->getTopicName());
         $payload = $this->serializer->encode($envelope);
 
-        if (method_exists($topic, 'producev')) {
-            // ext-rdkafka <= 4.0.0 will fail calling `producev` on librdkafka >= 1.0.0 causing segfault
-            // Since we are forcing to use at least librdkafka:1.0.0, no need to check the lib version anymore
-            if (false !== phpversion('rdkafka') && version_compare(phpversion('rdkafka'), '4.0.0', '<')) {
-                trigger_error(
-                    'ext-rdkafka < 4.0.0 is incompatible with lib-rdkafka 1.0.0 when calling `producev`. ' .
-                    'Falling back to `produce` (without message headers) instead.',
-                    E_USER_WARNING
-                );
-            } else {
-                $topic->producev(
-                    RD_KAFKA_PARTITION_UA,
-                    0,
-                    $payload['body'],
-                    $payload['key'] ?? null,
-                    $payload['headers'] ?? null,
-                    $payload['timestamp_ms'] ?? null
-                );
+        $topic->producev(
+            RD_KAFKA_PARTITION_UA,
+            0,
+            $payload['body'],
+            $payload['key'] ?? null,
+            $payload['headers'] ?? null,
+            $payload['timestamp_ms'] ?? null
+        );
 
-                $this->producer->poll(0);
-            }
-        } else {
-            $topic->produce(
-                RD_KAFKA_PARTITION_UA,
-                0,
-                $payload['body'],
-                $payload['key'] ?? null
-            );
-
-            $this->producer->poll(0);
-        }
+        $this->producer->poll(0);
 
         for ($flushRetries = 0; $flushRetries < $this->properties->getFlushRetries() + 1; ++$flushRetries) {
             $code = $producer->flush($this->properties->getFlushTimeoutMs());

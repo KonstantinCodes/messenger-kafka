@@ -1,0 +1,15 @@
+FROM php:8.5-cli
+
+RUN apt-get update && apt-get install -y \
+    git unzip librdkafka-dev \
+    && pecl install rdkafka \
+    && docker-php-ext-enable rdkafka \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+COPY . .
+RUN composer update --prefer-dist --no-progress
+
+CMD ["vendor/bin/simple-phpunit", "tests/Unit"]

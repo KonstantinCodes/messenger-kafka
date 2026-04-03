@@ -35,7 +35,7 @@ class KafkaReceiver implements ReceiverInterface
         $this->subscribed = false;
     }
 
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
         $message = $this->getSubscribedConsumer()->consume($this->properties->getReceiveTimeoutMs());
 

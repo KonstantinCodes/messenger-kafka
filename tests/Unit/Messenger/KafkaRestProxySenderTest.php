@@ -43,8 +43,7 @@ class DummyClient implements ClientInterface
 {
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        echo 'hallo';
-        // TODO: Implement sendRequest() method.
+        throw new \RuntimeException('Not implemented');
     }
 }
 
@@ -52,11 +51,11 @@ class DummySerializer implements SerializerInterface
 {
     public function decode(array $encodedEnvelope): Envelope
     {
-        // TODO: Implement decode() method.
+        throw new \RuntimeException('Not implemented');
     }
 
     public function encode(Envelope $envelope): array
     {
-        // TODO: Implement encode() method.
+        throw new \RuntimeException('Not implemented');
     }
 }

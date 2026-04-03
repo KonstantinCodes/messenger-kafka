@@ -29,15 +29,12 @@ class KafkaTransportFactory implements TransportFactoryInterface
     private const DSN_PROTOCOL_KAFKA = 'kafka://';
     private const DSN_PROTOCOL_KAFKA_SSL = 'kafka+ssl://';
 
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var RdKafkaFactory */
-    private $kafkaFactory;
+    private LoggerInterface $logger;
+    private RdKafkaFactory $kafkaFactory;
 
     public function __construct(
         RdKafkaFactory $kafkaFactory,
-        ?LoggerInterface $logger
+        ?LoggerInterface $logger = null
     ) {
         $this->logger = $logger ?? new NullLogger();
         $this->kafkaFactory = $kafkaFactory;
@@ -102,7 +99,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
     private function createRebalanceCb(LoggerInterface $logger): \Closure
     {
-        return function (KafkaConsumer $kafka, $err, array $topicPartitions = null) use ($logger) {
+        return function (KafkaConsumer $kafka, int $err, ?array $topicPartitions = null) use ($logger) {
             /** @var TopicPartition[] $topicPartitions */
             $topicPartitions = $topicPartitions ?? [];
 
@@ -122,7 +119,7 @@ class KafkaTransportFactory implements TransportFactoryInterface
                     break;
 
                 default:
-                    throw new \Exception($err);
+                    throw new \RuntimeException((string) $err);
             }
         };
     }

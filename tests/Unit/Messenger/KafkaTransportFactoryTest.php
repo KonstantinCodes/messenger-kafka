@@ -13,7 +13,7 @@ use Symfony\Component\Messenger\Transport\TransportInterface;
 
 class KafkaTransportFactoryTest extends TestCase
 {
-    /** @var LoggerInterface */
+    /** @var KafkaTransportFactory */
     private $factory;
 
     /** @var SerializerInterface */
@@ -36,9 +36,7 @@ class KafkaTransportFactoryTest extends TestCase
         static::assertTrue($this->factory->supports('kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093,kafka+ssl://prod-kafka-01:9093', []));
     }
 
-    /**
-     * @group legacy
-     */
+    #[\PHPUnit\Framework\Attributes\Group('legacy')]
     public function testCreateTransport()
     {
         $transport = $this->factory->createTransport(

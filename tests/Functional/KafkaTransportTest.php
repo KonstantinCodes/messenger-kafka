@@ -7,6 +7,7 @@ namespace Koco\Kafka\Tests\Functional;
 use Closure;
 use Koco\Kafka\Messenger\KafkaTransportFactory;
 use Koco\Kafka\RdKafka\RdKafkaFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -19,17 +20,10 @@ class KafkaTransportTest extends TestCase
     private const BROKER = '127.0.0.1:9092';
     private const TOPIC_NAME = 'test_topic';
 
-    /** @var KafkaTransportFactory */
-    private $factory;
-
-    /** @var SerializerInterface */
-    private $serializerMock;
-
-    /** @var string */
-    private $testIteration = 0;
-
-    /** @var \DateTimeInterface */
-    private $testStartTime;
+    private KafkaTransportFactory $factory;
+    private SerializerInterface $serializerMock;
+    private int $testIteration = 0;
+    private \DateTimeInterface $testStartTime;
 
     protected function setUp(): void
     {
@@ -45,7 +39,7 @@ class KafkaTransportTest extends TestCase
         $this->testStartTime = $this->testStartTime ?? new \DateTimeImmutable();
     }
 
-    public function serializerProvider()
+    public static function serializerProvider(): array
     {
         $serializer = new Serializer();
         $phpSerializer = new PhpSerializer();
@@ -53,18 +47,16 @@ class KafkaTransportTest extends TestCase
         return [
             [
                 $serializer,
-                $this->createSerializerDecodeClosure($serializer),
+                static fn (array $encodedEnvelope) => self::assertAndDecodeSerializer($serializer, $encodedEnvelope),
             ],
             [
                 $phpSerializer,
-                $this->createPHPSerializerDecodeClosure($phpSerializer),
+                static fn (array $encodedEnvelope) => self::assertAndDecodePHPSerializer($phpSerializer, $encodedEnvelope),
             ],
         ];
     }
 
-    /**
-     * @dataProvider serializerProvider
-     */
+    #[DataProvider('serializerProvider')]
     public function testSendAndReceive(SerializerInterface $serializer, Closure $decodeClosure)
     {
         $sender = $this->factory->createTransport(
@@ -118,40 +110,32 @@ class KafkaTransportTest extends TestCase
         $receiver->ack($envelopes[0]);
     }
 
-    public function createSerializerDecodeClosure(SerializerInterface $serializer): Closure
+    private static function assertAndDecodeSerializer(SerializerInterface $serializer, array $encodedEnvelope): Envelope
     {
-        return function (array $encodedEnvelope) use ($serializer) {
-            $this->assertIsArray($encodedEnvelope);
+        self::assertIsArray($encodedEnvelope);
+        self::assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
+        self::assertArrayHasKey('headers', $encodedEnvelope);
 
-            $this->assertSame('{"data":"my_test_data"}', $encodedEnvelope['body']);
+        $headers = $encodedEnvelope['headers'];
+        self::assertSame(TestMessage::class, $headers['type']);
+        self::assertSame('application/json', $headers['Content-Type']);
 
-            $this->assertArrayHasKey('headers', $encodedEnvelope);
-            $headers = $encodedEnvelope['headers'];
-
-            $this->assertSame(TestMessage::class, $headers['type']);
-            $this->assertSame('application/json', $headers['Content-Type']);
-
-            return $serializer->decode($encodedEnvelope);
-        };
+        return $serializer->decode($encodedEnvelope);
     }
 
-    public function createPHPSerializerDecodeClosure(SerializerInterface $serializer): Closure
+    private static function assertAndDecodePHPSerializer(SerializerInterface $serializer, array $encodedEnvelope): Envelope
     {
-        return function (array $encodedEnvelope) use ($serializer) {
-            $this->assertIsArray($encodedEnvelope);
+        self::assertIsArray($encodedEnvelope);
+        self::assertSame(
+            'O:36:\"Symfony\\\\Component\\\\Messenger\\\\Envelope\":2:{s:44:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0stamps\";a:0:{}s:45:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0message\";O:39:\"Koco\\\\Kafka\\\\Tests\\\\Functional\\\\TestMessage\":1:{s:4:\"data\";s:12:\"my_test_data\";}}',
+            $encodedEnvelope['body']
+        );
+        self::assertArrayHasKey('headers', $encodedEnvelope);
 
-            $this->assertSame(
-                'O:36:\"Symfony\\\\Component\\\\Messenger\\\\Envelope\":2:{s:44:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0stamps\";a:0:{}s:45:\"\0Symfony\\\\Component\\\\Messenger\\\\Envelope\0message\";O:39:\"Koco\\\\Kafka\\\\Tests\\\\Functional\\\\TestMessage\":1:{s:4:\"data\";s:12:\"my_test_data\";}}',
-                $encodedEnvelope['body']
-            );
-
-            $this->assertArrayHasKey('headers', $encodedEnvelope);
-
-            return $serializer->decode($encodedEnvelope);
-        };
+        return $serializer->decode($encodedEnvelope);
     }
 
-    private function getTopicName()
+    private function getTopicName(): string
     {
         return self::TOPIC_NAME . '_' . $this->testStartTime->getTimestamp() . '_' . $this->testIteration;
     }

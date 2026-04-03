@@ -19,20 +19,11 @@ class RestProxyTransportFactory implements TransportFactoryInterface
     private const DSN_PROTOCOL_KAFKA_REST = 'kafka+rest';
     private const DSN_PROTOCOL_KAFKA_REST_SSL = 'kafka+rest+ssl';
 
-    /** @var LoggerInterface|null */
-    private $logger;
-
-    /** @var ClientInterface|null */
-    private $client;
-
-    /** @var RequestFactoryInterface|null */
-    private $requestFactory;
-
-    /** @var UriFactoryInterface|null */
-    private $uriFactory;
-
-    /** @var StreamFactoryInterface|null */
-    private $streamFactory;
+    private ?LoggerInterface $logger;
+    private ?ClientInterface $client;
+    private ?RequestFactoryInterface $requestFactory;
+    private ?UriFactoryInterface $uriFactory;
+    private ?StreamFactoryInterface $streamFactory;
 
     public function __construct(
         ?LoggerInterface $logger,
@@ -91,7 +82,7 @@ class RestProxyTransportFactory implements TransportFactoryInterface
 
         $dsnOptions = [];
         foreach ($queryParts as $queryPart) {
-            list($key, $value) = explode('=', $queryPart);
+            [$key, $value] = explode('=', $queryPart);
             $dsnOptions[$key] = urldecode($value);
         }
 
@@ -117,7 +108,7 @@ class RestProxyTransportFactory implements TransportFactoryInterface
         }
     }
 
-    private function createMissingServiceException(string $className, string $message = null)
+    private function createMissingServiceException(string $className, ?string $message = null): \InvalidArgumentException
     {
         return new \InvalidArgumentException(sprintf(
             '%sPlease install a library that provides "%s" and ensure the service is registered.',

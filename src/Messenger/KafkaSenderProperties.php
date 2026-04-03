@@ -8,17 +8,10 @@ use RdKafka\Conf as KafkaConf;
 
 final class KafkaSenderProperties
 {
-    /** @var KafkaConf */
-    private $kafkaConf;
-
-    /** @var string */
-    private $topicName;
-
-    /** @var int */
-    private $flushTimeoutMs;
-
-    /** @var int */
-    private $flushRetries;
+    private KafkaConf $kafkaConf;
+    private string $topicName;
+    private int $flushTimeoutMs;
+    private int $flushRetries;
 
     public function __construct(
         KafkaConf $kafkaConf,

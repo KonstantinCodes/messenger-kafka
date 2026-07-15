@@ -117,7 +117,7 @@ class RestProxyTransportFactory implements TransportFactoryInterface
         }
     }
 
-    private function createMissingServiceException(string $className, string $message = null)
+    private function createMissingServiceException(string $className, ?string $message = null)
     {
         return new \InvalidArgumentException(sprintf(
             '%sPlease install a library that provides "%s" and ensure the service is registered.',

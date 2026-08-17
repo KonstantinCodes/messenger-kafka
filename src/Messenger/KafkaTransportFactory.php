@@ -53,35 +53,58 @@ class KafkaTransportFactory implements TransportFactoryInterface
 
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
-        $conf = new KafkaConf();
+        $brokers = implode(',', $this->stripProtocol($dsn));
+        $extraConf = array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []);
 
+        // Sender and receiver get SEPARATE Conf instances on purpose.
+        //
+        // Previously a single Conf was built here, had the rebalance callback set
+        // on it and was then handed to both. `rebalance_cb` is a consumer-only
+        // property, so every producer created from that Conf made librdkafka emit
+        //
+        //   CONFWARN: Configuration property rebalance_cb is a consumer property
+        //   and will be ignored by this producer instance
+        //
+        // on each instantiation. Harmless, but for a producer that publishes on
+        // every HTTP request it means one warning line per request in the logs.
+        $senderConf = $this->createConf($brokers, $extraConf);
+
+        $receiverConf = $this->createConf($brokers, $extraConf);
         // Set a rebalance callback to log partition assignments (optional)
-        $conf->setRebalanceCb($this->createRebalanceCb($this->logger));
-
-        $brokers = $this->stripProtocol($dsn);
-        $conf->set('metadata.broker.list', implode(',', $brokers));
-
-        foreach (array_merge($options['topic_conf'] ?? [], $options['kafka_conf'] ?? []) as $option => $value) {
-            $conf->set($option, $value);
-        }
+        $receiverConf->setRebalanceCb($this->createRebalanceCb($this->logger));
 
         return new KafkaTransport(
             $this->logger,
             $serializer,
             $this->kafkaFactory,
             new KafkaSenderProperties(
-                $conf,
+                $senderConf,
                 $options['topic']['name'],
                 $options['flushTimeout'] ?? 10000,
                 $options['flushRetries'] ?? 0
             ),
             new KafkaReceiverProperties(
-                $conf,
+                $receiverConf,
                 $options['topic']['name'],
                 $options['receiveTimeout'] ?? 10000,
                 $options['commitAsync'] ?? false
             )
         );
+    }
+
+    /**
+     * @param array<string, mixed> $extraConf
+     */
+    private function createConf(string $brokers, array $extraConf): KafkaConf
+    {
+        $conf = new KafkaConf();
+        $conf->set('metadata.broker.list', $brokers);
+
+        foreach ($extraConf as $option => $value) {
+            $conf->set($option, $value);
+        }
+
+        return $conf;
     }
 
     private function stripProtocol(string $dsn): array

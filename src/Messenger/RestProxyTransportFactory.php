@@ -20,17 +20,43 @@ class RestProxyTransportFactory implements TransportFactoryInterface
     private const DSN_PROTOCOL_KAFKA_REST_SSL = 'kafka+rest+ssl';
 
     private ?LoggerInterface $logger;
-    private ?ClientInterface $client;
-    private ?RequestFactoryInterface $requestFactory;
-    private ?UriFactoryInterface $uriFactory;
-    private ?StreamFactoryInterface $streamFactory;
 
+    /**
+     * PSR-зависимости хранятся КАК ПЕРЕДАНЫ — объектом или замыканием, которое его
+     * отдаст. Контейнер передаёт сюда замыкания (см. KocoKafkaExtension): иначе
+     * Symfony создавал бы Psr18Client при старте приложения, опрашивая supports()
+     * у всех фабрик транспортов, и падал бы в проекте без реализации PSR-17,
+     * который REST-proxy вообще не использует.
+     *
+     * Прямая передача объектов сохранена для ручного создания и тестов.
+     *
+     * @var ClientInterface|\Closure|null
+     */
+    private $client;
+
+    /** @var RequestFactoryInterface|\Closure|null */
+    private $requestFactory;
+
+    /** @var UriFactoryInterface|\Closure|null */
+    private $uriFactory;
+
+    /** @var StreamFactoryInterface|\Closure|null */
+    private $streamFactory;
+
+    private bool $resolved = false;
+
+    /**
+     * @param ClientInterface|\Closure|null         $client
+     * @param RequestFactoryInterface|\Closure|null $requestFactory
+     * @param UriFactoryInterface|\Closure|null     $uriFactory
+     * @param StreamFactoryInterface|\Closure|null  $streamFactory
+     */
     public function __construct(
         ?LoggerInterface $logger,
-        ?ClientInterface $client,
-        ?RequestFactoryInterface $requestFactory,
-        ?UriFactoryInterface $uriFactory,
-        ?StreamFactoryInterface $streamFactory
+        $client,
+        $requestFactory,
+        $uriFactory,
+        $streamFactory
     ) {
         $this->logger = $logger;
         $this->client = $client;
@@ -46,6 +72,7 @@ class RestProxyTransportFactory implements TransportFactoryInterface
 
     public function createTransport(string $dsn, array $options, SerializerInterface $serializer): TransportInterface
     {
+        $this->resolveDependencies();
         $this->checkDependencies();
 
         $dsn = $this->uriFactory->createUri($dsn);
@@ -87,6 +114,26 @@ class RestProxyTransportFactory implements TransportFactoryInterface
         }
 
         return $dsnOptions;
+    }
+
+    /**
+     * Разворачивает замыкания в сервисы. Зовётся только из createTransport(), то
+     * есть лишь для DSN kafka+rest — приложение с другими транспортами PSR-сервисы
+     * не трогает вовсе.
+     */
+    private function resolveDependencies(): void
+    {
+        if ($this->resolved) {
+            return;
+        }
+
+        foreach (['client', 'requestFactory', 'uriFactory', 'streamFactory'] as $property) {
+            if ($this->{$property} instanceof \Closure) {
+                $this->{$property} = ($this->{$property})();
+            }
+        }
+
+        $this->resolved = true;
     }
 
     private function checkDependencies(): void

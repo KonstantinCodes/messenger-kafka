@@ -8,17 +8,10 @@ use RdKafka\Conf as KafkaConf;
 
 final class KafkaReceiverProperties
 {
-    /** @var KafkaConf */
-    private $kafkaConf;
-
-    /** @var string */
-    private $topicName;
-
-    /** @var int */
-    private $receiveTimeoutMs;
-
-    /** @var bool */
-    private $commitAsync;
+    private KafkaConf $kafkaConf;
+    private string $topicName;
+    private int $receiveTimeoutMs;
+    private bool $commitAsync;
 
     public function __construct(
         KafkaConf $kafkaConf,

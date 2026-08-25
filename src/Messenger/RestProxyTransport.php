@@ -17,34 +17,16 @@ use Symfony\Component\Messenger\Transport\TransportInterface;
 
 class RestProxyTransport implements TransportInterface, MessageCountAwareInterface
 {
-    /** @var UriInterface */
-    private $baseUri;
-
-    /** @var string */
-    private $topicName;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var ClientInterface */
-    private $client;
-
-    /** @var RequestFactoryInterface */
-    private $requestFactory;
-
-    /** @var UriFactoryInterface */
-    private $uriFactory;
-
-    /** @var StreamFactoryInterface */
-    private $streamFactory;
-
-    /** @var LoggerInterface|null */
-    private $logger;
-
-    private $receiver;
-
-    /** @var RestProxySender */
-    private $sender;
+    private UriInterface $baseUri;
+    private string $topicName;
+    private SerializerInterface $serializer;
+    private ClientInterface $client;
+    private RequestFactoryInterface $requestFactory;
+    private UriFactoryInterface $uriFactory;
+    private StreamFactoryInterface $streamFactory;
+    private ?LoggerInterface $logger;
+    private ?RestProxyReceiver $receiver = null;
+    private ?RestProxySender $sender = null;
 
     public function __construct(
         UriInterface $baseUri,
@@ -66,44 +48,29 @@ class RestProxyTransport implements TransportInterface, MessageCountAwareInterfa
         $this->streamFactory = $streamFactory;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function get(): iterable
     {
-        throw new \Exception('Not implemented!');
+        throw new \LogicException('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function ack(Envelope $envelope): void
     {
-        throw new \Exception('Not implemented!');
+        throw new \LogicException('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function reject(Envelope $envelope): void
     {
-        throw new \Exception('Not implemented!');
+        throw new \LogicException('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(Envelope $envelope): Envelope
     {
         return ($this->sender ?? $this->getSender())->send($envelope);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getMessageCount(): int
     {
-        throw new \Exception('Not implemented!');
+        throw new \LogicException('Not implemented!');
     }
 
     private function getSender(): RestProxySender

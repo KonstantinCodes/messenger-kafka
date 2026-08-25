@@ -12,26 +12,13 @@ use Symfony\Component\Messenger\Transport\TransportInterface;
 
 class KafkaTransport implements TransportInterface
 {
-    /** @var LoggerInterface */
-    private $logger;
-
-    /** @var SerializerInterface */
-    private $serializer;
-
-    /** @var RdKafkaFactory */
-    private $rdKafkaFactory;
-
-    /** @var KafkaSenderProperties */
-    private $kafkaSenderProperties;
-
-    /** @var KafkaReceiverProperties */
-    private $kafkaReceiverProperties;
-
-    /** @var KafkaSender */
-    private $sender;
-
-    /** @var KafkaReceiver */
-    private $receiver;
+    private LoggerInterface $logger;
+    private SerializerInterface $serializer;
+    private RdKafkaFactory $rdKafkaFactory;
+    private KafkaSenderProperties $kafkaSenderProperties;
+    private KafkaReceiverProperties $kafkaReceiverProperties;
+    private ?KafkaSender $sender = null;
+    private ?KafkaReceiver $receiver = null;
 
     public function __construct(
         LoggerInterface $logger,

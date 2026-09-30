@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/github/license/KonstantinCodes/messenger-kafka.svg)](LICENSE)
 [![Packagist](https://img.shields.io/packagist/dt/koco/messenger-kafka.svg)](https://packagist.org/packages/koco/messenger-kafka)
 [![Maintainability](https://api.codeclimate.com/v1/badges/7fa3d2da6a828a676f35/maintainability)](https://codeclimate.com/github/KonstantinCodes/messenger-kafka/maintainability)
-[![Tests](https://github.com/KonstantinCodes/messenger-kafka/workflows/Tests/badge.svg)](https://github.com/KonstantinCodes/messenger-kafka/actions)
+[![Tests and coding style](https://github.com/KonstantinCodes/messenger-kafka/actions/workflows/php.yml/badge.svg?branch=feature%2Fcurrent-symfony-support)](https://github.com/KonstantinCodes/messenger-kafka/actions/workflows/php.yml?query=branch%3Afeature%2Fcurrent-symfony-support)
 
 This bundle aims to provide a simple Kafka transport for Symfony Messenger. Kafka REST Proxy support coming soon.
 
@@ -19,7 +19,7 @@ Install the `rdkafka` PHP extension to use the native Kafka transport. REST Prox
 
 ## Tests
 
-GitHub Actions runs the unit and Kafka integration tests across the PHP/Symfony compatibility matrix, plus a separate coding-style check. Each test job uploads JUnit results and Clover coverage reports as downloadable artifacts, including when tests fail. Runs start on branch pushes, pull requests, or manually from the Actions tab.
+The badge above reports the combined result of all six PHP/Symfony test jobs and the coding-style check. GitHub Actions runs the unit and Kafka integration tests across the PHP/Symfony compatibility matrix, plus a separate coding-style check. Each test job uploads JUnit results and Clover coverage reports as downloadable artifacts, including when tests fail. Runs start on branch pushes, pull requests, or manually from the Actions tab.
 
 To run the style check and unit tests locally, use `composer test`. To include integration tests, start a Kafka broker at `127.0.0.1:9092` and run `vendor/bin/simple-phpunit`.
 

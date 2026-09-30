@@ -105,6 +105,7 @@ jobs:
           php-version: '8.4'
           coverage: none
           tools: composer:v2
+          extensions: rdkafka
 
       - name: Install dependencies
         run: composer update --prefer-dist --no-progress --no-interaction

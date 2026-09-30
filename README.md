@@ -3,10 +3,25 @@
 [![License](https://img.shields.io/github/license/KonstantinCodes/messenger-kafka.svg)](LICENSE)
 [![Packagist](https://img.shields.io/packagist/dt/koco/messenger-kafka.svg)](https://packagist.org/packages/koco/messenger-kafka)
 [![Maintainability](https://api.codeclimate.com/v1/badges/7fa3d2da6a828a676f35/maintainability)](https://codeclimate.com/github/KonstantinCodes/messenger-kafka/maintainability)
-[![CircleCI](https://circleci.com/gh/KonstantinCodes/messenger-kafka.svg?style=svg)](https://circleci.com/gh/KonstantinCodes/messenger-kafka)
 [![Tests](https://github.com/KonstantinCodes/messenger-kafka/workflows/Tests/badge.svg)](https://github.com/KonstantinCodes/messenger-kafka/actions)
 
 This bundle aims to provide a simple Kafka transport for Symfony Messenger. Kafka REST Proxy support coming soon.
+
+## Compatibility
+
+Supports Symfony `^5.4 || ^6.4 || ^7.4 || ^8.1`, with GitHub Actions coverage for each branch.
+PHP requirements are 7.4+ for Symfony 5.4, 8.1+ for Symfony 6.4, 8.2+ for Symfony 7.4, and 8.4+ for Symfony 8.1.
+Symfony 5.4 remains supported here while it receives upstream security fixes.
+
+Applications on older Symfony versions can continue using the published `v0.18` release (`composer require koco/messenger-kafka:^0.18`), provided their other dependency constraints allow it. Those versions are no longer supported by this development branch.
+
+Install the `rdkafka` PHP extension to use the native Kafka transport. REST Proxy sending uses a PSR-18 HTTP client and PSR-17 factories and supports PSR-7 1.x and 2.x.
+
+## Tests
+
+GitHub Actions runs the unit and Kafka integration tests across the PHP/Symfony compatibility matrix, plus a separate coding-style check. Each test job uploads JUnit results and Clover coverage reports as downloadable artifacts, including when tests fail. Runs start on branch pushes, pull requests, or manually from the Actions tab.
+
+To run the style check and unit tests locally, use `composer test`. To include integration tests, start a Kafka broker at `127.0.0.1:9092` and run `vendor/bin/simple-phpunit`.
 
 ## Installation
 

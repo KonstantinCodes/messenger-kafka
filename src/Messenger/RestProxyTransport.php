@@ -66,41 +66,26 @@ class RestProxyTransport implements TransportInterface, MessageCountAwareInterfa
         $this->streamFactory = $streamFactory;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
         throw new \Exception('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function ack(Envelope $envelope): void
     {
         throw new \Exception('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function reject(Envelope $envelope): void
     {
         throw new \Exception('Not implemented!');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(Envelope $envelope): Envelope
     {
         return ($this->sender ?? $this->getSender())->send($envelope);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getMessageCount(): int
     {
         throw new \Exception('Not implemented!');
@@ -115,7 +100,7 @@ class RestProxyTransport implements TransportInterface, MessageCountAwareInterfa
             $this->client,
             $this->requestFactory,
             $this->uriFactory,
-            $this->streamFactory
+            $this->streamFactory,
         );
     }
 }

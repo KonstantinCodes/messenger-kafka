@@ -54,9 +54,6 @@ class RestProxySender implements SenderInterface
         $this->streamFactory = $streamFactory;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function send(Envelope $envelope): Envelope
     {
         $encoded = $this->serializer->encode($envelope);
@@ -65,7 +62,7 @@ class RestProxySender implements SenderInterface
         $request = $request->withHeader('Accept', 'application/vnd.kafka.v2+json');
         $request = $request->withHeader('Content-Type', $encoded['headers']['Content-Type']);
         $request = $request->withBody($this->streamFactory->createStream(
-            '{ "records": [ { "key": "' . $encoded['key'] . '", "value": "' . $encoded['body'] . '" } ] }'
+            '{ "records": [ { "key": "' . $encoded['key'] . '", "value": "' . $encoded['body'] . '" } ] }',
         ));
 
         $response = $this->client->sendRequest($request);

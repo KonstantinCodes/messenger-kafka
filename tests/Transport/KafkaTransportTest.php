@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Transport;
 
+use Koco\Kafka\Tests\Fixtures\TestMessage;
 use Koco\Kafka\Transport\KafkaMessageStamp;
 use Koco\Kafka\Transport\KafkaTransport;
 use Koco\Kafka\Transport\RdKafkaFactory;
-use Koco\Kafka\Tests\Fixtures\TestMessage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -66,10 +68,10 @@ class KafkaTransportTest extends TestCase
             $this->logger,
             $this->serializer,
             new RdKafkaFactory(),
-            []
+            [],
         );
 
-        static::assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 
     public function testGet(): void
@@ -78,7 +80,7 @@ class KafkaTransportTest extends TestCase
             ->method('subscribe');
 
         $testMessage = new Message();
-        $testMessage->err = \RD_KAFKA_RESP_ERR_NO_ERROR;
+        $testMessage->err = RD_KAFKA_RESP_ERR_NO_ERROR;
         $testMessage->topic_name = 'test';
         $testMessage->partition = 0;
         $testMessage->headers = [
@@ -93,7 +95,7 @@ class KafkaTransportTest extends TestCase
             ->method('consume')
             ->willReturn($testMessage);
 
-        $this->serializer->expects(static::once())
+        $this->serializer->expects(self::once())
             ->method('decode')
             ->with([
                 'body' => '{"data":null}',
@@ -122,25 +124,25 @@ class KafkaTransportTest extends TestCase
                     'receive_timeout' => 10000,
                     'conf' => [],
                 ],
-            ]
+            ],
         );
 
         $receivedMessages = $transport->get();
-        static::assertArrayHasKey(0, $receivedMessages);
+        self::assertArrayHasKey(0, $receivedMessages);
 
         $receivedMessage = $receivedMessages[0];
-        static::assertInstanceOf(Envelope::class, $receivedMessage);
-        static::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
+        self::assertInstanceOf(Envelope::class, $receivedMessage);
+        self::assertInstanceOf(TestMessage::class, $receivedMessage->getMessage());
 
         $stamps = $receivedMessage->all();
-        static::assertCount(1, $stamps);
-        static::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
+        self::assertCount(1, $stamps);
+        self::assertArrayHasKey(KafkaMessageStamp::class, $stamps);
 
         $kafkaMessageStamps = $stamps[KafkaMessageStamp::class];
-        static::assertCount(1, $kafkaMessageStamps);
+        self::assertCount(1, $kafkaMessageStamps);
 
         /** @var KafkaMessageStamp $kafkaMessageStamp */
         $kafkaMessageStamp = $kafkaMessageStamps[0];
-        static::assertSame($testMessage, $kafkaMessageStamp->getMessage());
+        self::assertSame($testMessage, $kafkaMessageStamp->getMessage());
     }
 }

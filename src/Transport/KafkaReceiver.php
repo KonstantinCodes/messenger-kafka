@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Transport;
 
 use Psr\Log\LoggerInterface;
@@ -43,22 +45,22 @@ class KafkaReceiver implements ReceiverInterface
      *
      * @psalm-return array{0?: Envelope}
      */
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
         $message = $this->getSubscribedConsumer()->consume($this->properties['receive_timeout']);
 
         switch ($message->err) {
-            case \RD_KAFKA_RESP_ERR_NO_ERROR:
-                $this->logger->debug(sprintf(
+            case RD_KAFKA_RESP_ERR_NO_ERROR:
+                $this->logger->debug(\sprintf(
                     'Kafka: Message %s %s %s received ',
                     $message->topic_name,
                     $message->partition,
-                    $message->offset
+                    $message->offset,
                 ));
 
                 $envelope = $this->serializer->decode([
                     'body' => $message->payload,
-                    'headers' => $message->headers,
+                    'headers' => $message->headers ?? [],
                     'key' => $message->key,
                     'topic_name' => $message->topic_name,
                     'partition' => $message->partition,
@@ -67,13 +69,13 @@ class KafkaReceiver implements ReceiverInterface
                 ]);
 
                 return [$envelope->with(new KafkaMessageStamp($message))];
-            case \RD_KAFKA_RESP_ERR__PARTITION_EOF:
+            case RD_KAFKA_RESP_ERR__PARTITION_EOF:
                 $this->logger->debug('Kafka: Partition EOF reached. Waiting for next message ...');
                 break;
-            case \RD_KAFKA_RESP_ERR__TIMED_OUT:
+            case RD_KAFKA_RESP_ERR__TIMED_OUT:
                 $this->logger->debug('Kafka: Consumer timeout.');
                 break;
-            case \RD_KAFKA_RESP_ERR__TRANSPORT:
+            case RD_KAFKA_RESP_ERR__TRANSPORT:
                 $this->logger->debug('Kafka: Broker transport failure.');
                 break;
             default:
@@ -85,8 +87,6 @@ class KafkaReceiver implements ReceiverInterface
 
     public function ack(Envelope $envelope): void
     {
-        $consumer = $this->getConsumer();
-
         /** @var ?KafkaMessageStamp $transportStamp */
         $transportStamp = $envelope->last(KafkaMessageStamp::class);
 
@@ -94,25 +94,26 @@ class KafkaReceiver implements ReceiverInterface
             throw new TransportException('Kafka message could not be acked because KafkaMessageStamp is missing.');
         }
 
+        $consumer = $this->getConsumer();
         $message = $transportStamp->getMessage();
 
         if ($this->properties['commit_async']) {
             $consumer->commitAsync($message);
 
-            $this->logger->debug(sprintf(
+            $this->logger->debug(\sprintf(
                 'Offset topic=%s partition=%s offset=%s to be committed asynchronously.',
                 $message->topic_name,
                 $message->partition,
-                $message->offset
+                $message->offset,
             ));
         } else {
             $consumer->commit($message);
 
-            $this->logger->debug(sprintf(
+            $this->logger->debug(\sprintf(
                 'Offset topic=%s partition=%s offset=%s successfully committed.',
                 $message->topic_name,
                 $message->partition,
-                $message->offset
+                $message->offset,
             ));
         }
     }
@@ -127,7 +128,7 @@ class KafkaReceiver implements ReceiverInterface
         $consumer = $this->getConsumer();
 
         if (false === $this->subscribed) {
-            $this->logger->debug(sprintf('Partition assignment for topics %s ...', implode(', ', $this->properties['topics'])));
+            $this->logger->debug(\sprintf('Partition assignment for topics %s ...', implode(', ', $this->properties['topics'])));
             $consumer->subscribe($this->properties['topics']);
 
             $this->subscribed = true;
@@ -146,27 +147,27 @@ class KafkaReceiver implements ReceiverInterface
      */
     private function createRebalanceCb(LoggerInterface $logger): \Closure
     {
-        return function (KafkaConsumer $kafkaConsumer, $err, array $topicPartitions = null) use ($logger) {
+        return static function (KafkaConsumer $kafkaConsumer, $err, ?array $topicPartitions = null) use ($logger): void {
             /** @var TopicPartition[] $topicPartitions */
             $topicPartitions = $topicPartitions ?? [];
 
             switch ($err) {
-                case \RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
+                case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
                     foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                        $logger->info(\sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
                     $kafkaConsumer->assign($topicPartitions);
                     break;
 
-                case \RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
+                case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
                     foreach ($topicPartitions as $topicPartition) {
-                        $logger->info(sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
+                        $logger->info(\sprintf('Assign: %s %s %s', $topicPartition->getTopic(), $topicPartition->getPartition(), $topicPartition->getOffset()));
                     }
                     $kafkaConsumer->assign(null);
                     break;
 
                 default:
-                    throw new TransportException('Kafka consumer response error: '.$err, $err);
+                    throw new TransportException('Kafka consumer response error: ' . $err, $err);
             }
         };
     }

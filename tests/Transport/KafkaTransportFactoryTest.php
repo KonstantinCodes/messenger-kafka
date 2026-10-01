@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Transport;
 
 use Koco\Kafka\Transport\KafkaTransportFactory;
@@ -31,8 +33,8 @@ class KafkaTransportFactoryTest extends TestCase
 
     public function testSupports(): void
     {
-        static::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
-        static::assertTrue($this->factory->supports('kafka://prod-kafka-01:9093,prod-kafka-01:9093,prod-kafka-01:9093', []));
+        self::assertTrue($this->factory->supports('kafka://my-local-kafka:9092', []));
+        self::assertTrue($this->factory->supports('kafka://prod-kafka-01:9093,prod-kafka-01:9093,prod-kafka-01:9093', []));
     }
 
     public function testCreateTransport(): void
@@ -49,10 +51,10 @@ class KafkaTransportFactoryTest extends TestCase
                     'conf' => [],
                 ],
             ],
-            $this->serializer
+            $this->serializer,
         );
 
-        static::assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 
     public function testCreateTransportFromDsn(): void
@@ -60,9 +62,9 @@ class KafkaTransportFactoryTest extends TestCase
         $transport = $this->factory->createTransport(
             'kafka://kafka1,kafka2:9092?consumer[topics][0]=test&consumer[receive_timeout]=10000',
             [],
-            $this->serializer
+            $this->serializer,
         );
 
-        static::assertInstanceOf(TransportInterface::class, $transport);
+        self::assertInstanceOf(TransportInterface::class, $transport);
     }
 }

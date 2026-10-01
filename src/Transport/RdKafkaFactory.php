@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Transport;
 
 use RdKafka\Conf;

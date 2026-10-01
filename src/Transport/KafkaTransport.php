@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Transport;
 
 use Psr\Log\LoggerInterface;
@@ -33,7 +35,7 @@ class KafkaTransport implements TransportInterface
         $this->logger = $logger;
         $this->serializer = $serializer;
         $this->rdKafkaFactory = $rdKafkaFactory;
-        $this->options = $options;
+        $this->options = KafkaOptions::resolve($options);
     }
 
     /**
@@ -41,9 +43,9 @@ class KafkaTransport implements TransportInterface
      *
      * @psalm-return array{0?: Envelope}
      */
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
-        return $this->getReceiver()->get();
+        return $this->getReceiver()->get($fetchSize);
     }
 
     public function ack(Envelope $envelope): void
@@ -63,23 +65,31 @@ class KafkaTransport implements TransportInterface
 
     private function getSender(): KafkaSender
     {
+        if (null === $this->options['producer']['topic_name']) {
+            throw new \Symfony\Component\Messenger\Exception\TransportException('Configure producer.topic_name before sending messages.');
+        }
+
         return $this->sender ?? $this->sender = new KafkaSender(
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
             $this->buildConf($this->options['conf'], $this->options['producer']['conf'] ?? []),
-            $this->options['producer'] ?? []
+            $this->options['producer'] ?? [],
         );
     }
 
     private function getReceiver(): KafkaReceiver
     {
+        if (!$this->options['consumer']['topics']) {
+            throw new \Symfony\Component\Messenger\Exception\TransportException('Configure consumer.topics before receiving messages.');
+        }
+
         return $this->receiver ?? $this->receiver = new KafkaReceiver(
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
             $this->buildConf($this->options['conf'], $this->options['consumer']['conf'] ?? []),
-            $this->options['consumer'] ?? []
+            $this->options['consumer'] ?? [],
         );
     }
 

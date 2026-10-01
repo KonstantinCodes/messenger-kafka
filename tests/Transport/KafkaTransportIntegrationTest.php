@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Koco\Kafka\Tests\Transport;
 
-use Koco\Kafka\Transport\KafkaTransportFactory;
 use Koco\Kafka\Tests\Fixtures\TestMessage;
+use Koco\Kafka\Transport\KafkaTransportFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
@@ -14,6 +16,7 @@ use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
  * @author Konstantin Scheumann <konstantin@konstantin.codes>
  *
  * @requires extension rdkafka
+ *
  * @group integration
  */
 class KafkaTransportIntegrationTest extends TestCase
@@ -21,7 +24,7 @@ class KafkaTransportIntegrationTest extends TestCase
     private const TOPIC_NAME = 'messenger_test';
 
     /**
-     * @var false|null|string
+     * @var false|string|null
      */
     private $dsn;
 
@@ -31,18 +34,12 @@ class KafkaTransportIntegrationTest extends TestCase
     /** @var SerializerInterface */
     private $serializer;
 
-    /** @var string */
-    private $testIteration = 0;
-
-    /** @var \DateTimeInterface */
-    private $testStartTime;
-
     protected function setUp(): void
     {
         parent::setUp();
 
         if (!getenv('MESSENGER_KAFKA_DSN')) {
-            $this->markTestSkipped('The "MESSENGER_KAFKA_DSN" environment variable is required.');
+            self::markTestSkipped('The "MESSENGER_KAFKA_DSN" environment variable is required.');
         }
 
         $this->dsn = getenv('MESSENGER_KAFKA_DSN');
@@ -50,10 +47,6 @@ class KafkaTransportIntegrationTest extends TestCase
         $this->factory = new KafkaTransportFactory(new NullLogger());
 
         $this->serializer = $this->createMock(SerializerInterface::class);
-
-        ++$this->testIteration;
-
-        $this->testStartTime = $this->testStartTime ?? new \DateTimeImmutable();
     }
 
     public function testSendAndReceive(): void
@@ -66,9 +59,9 @@ class KafkaTransportIntegrationTest extends TestCase
             'consumer' => [
                 'topics' => [$topicName],
                 'commit_async' => false,
-                'receive_timeout' => 60000,
+                'receive_timeout' => 1000,
                 'conf' => [
-                    'group.id' => 'messenger_test'.$topicName,
+                    'group.id' => 'messenger_test' . $topicName,
                     'enable.auto.offset.store' => 'false',
                     'enable.auto.commit' => 'false',
                     'session.timeout.ms' => '10000',
@@ -101,18 +94,18 @@ class KafkaTransportIntegrationTest extends TestCase
                     $this->assertSame('application/json', $headers['Content-Type']);
 
                     return $serializer->decode($encodedEnvelope);
-                }
+                },
             );
 
         $sender = $this->factory->createTransport($this->dsn, $options, $serializer);
         $sender->send($envelope);
 
         /** @var []Envelope $envelopes */
-        $envelopes = $receiver->get();
-        static::assertInstanceOf(Envelope::class, $envelopes[0]);
+        $envelopes = $this->receive($receiver);
+        self::assertInstanceOf(Envelope::class, $envelopes[0]);
 
         $message = $envelopes[0]->getMessage();
-        static::assertInstanceOf(TestMessage::class, $message);
+        self::assertInstanceOf(TestMessage::class, $message);
 
         $receiver->ack($envelopes[0]);
     }
@@ -121,8 +114,8 @@ class KafkaTransportIntegrationTest extends TestCase
     {
         $serializer = new Serializer();
         $topicName = $this->getTopicName('test_receive_from_two_topics');
-        $topicNameA = $topicName.'_A';
-        $topicNameB = $topicName.'_B';
+        $topicNameA = $topicName . '_A';
+        $topicNameB = $topicName . '_B';
 
         $senderA = $this->factory->createTransport(
             $this->dsn,
@@ -136,7 +129,7 @@ class KafkaTransportIntegrationTest extends TestCase
                     'conf' => [],
                 ],
             ],
-            $serializer
+            $serializer,
         );
 
         $senderB = $this->factory->createTransport(
@@ -151,7 +144,7 @@ class KafkaTransportIntegrationTest extends TestCase
                     'conf' => [],
                 ],
             ],
-            $serializer
+            $serializer,
         );
 
         $senderA->send(Envelope::wrap(new TestMessage('my_test_data_1'), []));
@@ -164,9 +157,9 @@ class KafkaTransportIntegrationTest extends TestCase
                 'consumer' => [
                     'topics' => [$topicNameA, $topicNameB],
                     'commit_async' => false,
-                    'receive_timeout' => 60000,
+                    'receive_timeout' => 1000,
                     'conf' => [
-                        'group.id' => 'messenger_test_'.$topicName,
+                        'group.id' => 'messenger_test_' . $topicName,
                         'enable.auto.offset.store' => 'false',
                         'enable.auto.commit' => 'false',
                         'session.timeout.ms' => '10000',
@@ -175,22 +168,40 @@ class KafkaTransportIntegrationTest extends TestCase
                 ],
                 'producer' => [],
             ],
-            $serializer
+            $serializer,
         );
 
         /** @var []Envelope $envelopes */
-        $envelopes1 = $receiver->get();
-        static::assertInstanceOf(TestMessage::class, $envelopes1[0]->getMessage());
+        $envelopes1 = $this->receive($receiver);
+        self::assertInstanceOf(TestMessage::class, $envelopes1[0]->getMessage());
         $receiver->ack($envelopes1[0]);
 
         /** @var []Envelope $envelopes */
-        $envelopes2 = $receiver->get();
-        static::assertInstanceOf(TestMessage::class, $envelopes2[0]->getMessage());
+        $envelopes2 = $this->receive($receiver);
+        self::assertInstanceOf(TestMessage::class, $envelopes2[0]->getMessage());
         $receiver->ack($envelopes2[0]);
+        self::assertEqualsCanonicalizing(['my_test_data_1', 'my_test_data_2'], [$envelopes1[0]->getMessage()->data, $envelopes2[0]->getMessage()->data]);
+        $stamp = \Koco\Kafka\Transport\KafkaMessageStamp::class;
+        self::assertEqualsCanonicalizing([$topicNameA, $topicNameB], [$envelopes1[0]->last($stamp)->getMessage()->topic_name, $envelopes2[0]->last($stamp)->getMessage()->topic_name]);
+    }
+
+    private function receive(\Symfony\Component\Messenger\Transport\TransportInterface $receiver): array
+    {
+        $deadline = microtime(true) + 30;
+        do {
+            $envelopes = [];
+            foreach ($receiver->get() as $envelope) {
+                $envelopes[] = $envelope;
+            }
+            if ($envelopes) {
+                return $envelopes;
+            }
+        } while (microtime(true) < $deadline);
+        self::fail('Timed out waiting for a Kafka message.');
     }
 
     private function getTopicName(string $name): string
     {
-        return self::TOPIC_NAME.'_'.$this->testStartTime->getTimestamp().'_'.$this->testIteration.'_'.$name;
+        return self::TOPIC_NAME . '_' . bin2hex(random_bytes(6)) . '_' . $name;
     }
 }

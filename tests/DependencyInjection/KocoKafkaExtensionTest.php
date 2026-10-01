@@ -35,9 +35,24 @@ class KocoKafkaExtensionTest extends TestCase
             public function registerContainerConfiguration(LoaderInterface $loader): void
             {
                 $loader->load(static function (ContainerBuilder $container): void {
-                    $container->loadFromExtension('framework', ['secret' => 'test', 'http_method_override' => false, 'messenger' => [
-                        'transports' => ['kafka' => ['dsn' => 'kafka://localhost:9092', 'options' => ['producer' => ['topic_name' => 'events']]]],
-                    ]]);
+                    $config = [
+                        'secret' => 'test',
+                        'http_method_override' => false,
+                        'php_errors' => ['log' => true],
+                        'messenger' => [
+                            'transports' => ['kafka' => ['dsn' => 'kafka://localhost:9092', 'options' => ['producer' => ['topic_name' => 'events']]]],
+                        ],
+                    ];
+                    if (Kernel::VERSION_ID < 60000) {
+                        $config['messenger']['reset_on_message'] = true;
+                    }
+                    if (Kernel::VERSION_ID >= 60400) {
+                        $config['handle_all_throwables'] = true;
+                    }
+                    if (Kernel::VERSION_ID >= 70300) {
+                        $config['property_info'] = ['with_constructor_extractor' => true];
+                    }
+                    $container->loadFromExtension('framework', $config);
                     $container->setAlias('test.kafka', 'messenger.transport.kafka')->setPublic(true);
                 });
             }

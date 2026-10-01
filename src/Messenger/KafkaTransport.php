@@ -47,9 +47,9 @@ class KafkaTransport implements TransportInterface
         $this->kafkaReceiverProperties = $kafkaReceiverProperties;
     }
 
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
-        return $this->getReceiver()->get();
+        return $this->getReceiver()->get($fetchSize);
     }
 
     public function ack(Envelope $envelope): void
@@ -73,7 +73,7 @@ class KafkaTransport implements TransportInterface
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
-            $this->kafkaSenderProperties
+            $this->kafkaSenderProperties,
         );
     }
 
@@ -83,7 +83,7 @@ class KafkaTransport implements TransportInterface
             $this->logger,
             $this->serializer,
             $this->rdKafkaFactory,
-            $this->kafkaReceiverProperties
+            $this->kafkaReceiverProperties,
         );
     }
 }

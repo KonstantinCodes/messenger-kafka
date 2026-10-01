@@ -35,17 +35,17 @@ class KafkaReceiver implements ReceiverInterface
         $this->subscribed = false;
     }
 
-    public function get(): iterable
+    public function get(int $fetchSize = 1): iterable
     {
         $message = $this->getSubscribedConsumer()->consume($this->properties->getReceiveTimeoutMs());
 
         switch ($message->err) {
             case RD_KAFKA_RESP_ERR_NO_ERROR:
-                $this->logger->info(sprintf(
+                $this->logger->info(\sprintf(
                     'Kafka: Message %s %s %s received ',
                     $message->topic_name,
                     $message->partition,
-                    $message->offset
+                    $message->offset,
                 ));
 
                 $envelope = $this->serializer->decode([
@@ -84,20 +84,20 @@ class KafkaReceiver implements ReceiverInterface
         if ($this->properties->isCommitAsync()) {
             $consumer->commitAsync($message);
 
-            $this->logger->info(sprintf(
+            $this->logger->info(\sprintf(
                 'Offset topic=%s partition=%s offset=%s to be committed asynchronously.',
                 $message->topic_name,
                 $message->partition,
-                $message->offset
+                $message->offset,
             ));
         } else {
             $consumer->commit($message);
 
-            $this->logger->info(sprintf(
+            $this->logger->info(\sprintf(
                 'Offset topic=%s partition=%s offset=%s successfully committed.',
                 $message->topic_name,
                 $message->partition,
-                $message->offset
+                $message->offset,
             ));
         }
     }

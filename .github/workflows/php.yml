@@ -2,78 +2,112 @@ name: Tests
 
 on:
   push:
-    branches: [ master ]
   pull_request:
-    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: PHP ${{ matrix.php }} / Symfony ${{ matrix.symfony }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
-        php:
-          - "7.4"
-          - "8.1"
+        include:
+          - php: '7.4'
+            symfony: '5.4.*'
+          - php: '8.1'
+            symfony: '6.4.*'
+          - php: '8.2'
+            symfony: '7.4.*'
+          - php: '8.3'
+            symfony: '7.4.*'
+          - php: '8.4'
+            symfony: '8.1.*'
+          - php: '8.5'
+            symfony: '8.1.*'
 
     services:
       kafka:
-        image: lensesio/fast-data-dev
+        image: apache/kafka:3.9.1
         env:
-          ADV_HOST: 127.0.0.1
-          SAMPLEDATA: 0
-          RUNTESTS: 0
-          FORWARDLOGS: 0
+          KAFKA_NODE_ID: 1
+          KAFKA_PROCESS_ROLES: broker,controller
+          KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://127.0.0.1:9092
+          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
         ports:
           - 9092:9092
-          - 8081:8081
-          - 8082:8082
-          - 8083:8083
-          - 2181:2181
+        options: >-
+          --health-cmd "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 12
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Validate composer.json and composer.lock
-        run: composer validate
-
-      - name: Install rdkafka
-        run:
-          sudo add-apt-repository universe && sudo apt update && sudo apt install netcat librdkafka1 librdkafka-dev
+      - uses: actions/checkout@v7.0.1
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@2.37.2
         with:
-          php-version: "${{ matrix.php }}"
+          php-version: ${{ matrix.php }}
           coverage: xdebug
-          tools: pecl, phpunit
+          tools: composer:v2
           extensions: rdkafka
-          ini-values: post_max_size=256M, short_open_tag=On
 
-      - name: check if rdkafka is there
-        run: php -v && php --ri rdkafka
+      - name: Validate Composer configuration
+        run: composer validate --strict
 
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v2
+      - name: Install dependencies for Symfony ${{ matrix.symfony }}
+        env:
+          SYMFONY_VERSION: ${{ matrix.symfony }}
+        run: |
+          composer update --prefer-dist --no-progress --no-interaction \
+            --with "symfony/config:$SYMFONY_VERSION" \
+            --with "symfony/dependency-injection:$SYMFONY_VERSION" \
+            --with "symfony/http-kernel:$SYMFONY_VERSION" \
+            --with "symfony/messenger:$SYMFONY_VERSION" \
+            --with "symfony/framework-bundle:$SYMFONY_VERSION" \
+            --with "symfony/serializer:$SYMFONY_VERSION" \
+            --with "symfony/property-access:$SYMFONY_VERSION" \
+            --with "symfony/phpunit-bridge:$SYMFONY_VERSION"
+
+      - name: Unit and Kafka integration tests
+        env:
+          XDEBUG_MODE: coverage
+        run: vendor/bin/simple-phpunit --log-junit results/tests/junit.xml --coverage-clover results/coverage/clover.xml
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
         with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-
+          name: test-results-${{ strategy.job-index }}-php-${{ matrix.php }}
+          path: results/
+          retention-days: 14
+
+  coding-style:
+    name: Coding style
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@2.37.2
+        with:
+          php-version: '7.4'
+          coverage: none
+          tools: composer:v2
 
       - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer update --prefer-dist --no-progress
+        run: composer update --prefer-dist --no-progress --no-interaction
 
-      - name: Wait for Kafka
-        run: .github/workflows/wait-for-kafka.sh
-
-      - name: Unit Tests
-        run: ./vendor/bin/simple-phpunit --log-junit results/tests/junit.xml
-
-      #- name: try to produce
-      #  run: echo "test" > testfile.json && kafkacat -b 0.0.0.0:9092 -t kafkacat_test -P testfile.json
-
-      # Docs: https://getcomposer.org/doc/articles/scripts.md
-      #- name: Run test suite
-      #  run: phpunit --log-junit results/tests/junit.xml --coverage-html results/coverage-report --coverage-clover clover.xml
+      - name: Check coding style
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff --using-cache=no

@@ -17,6 +17,8 @@ $config
         '@Symfony:risky' => true,
         '@PhpCsFixer:risky' => true,
         'array_syntax' => ['syntax' => 'short'],
+        // Trailing commas in parameter lists require PHP 8.0.
+        'trailing_comma_in_multiline' => ['elements' => ['arrays', 'arguments']],
         'yoda_style' => false,
         'single_import_per_statement' => false,
         'concat_space' => ['spacing' => 'one'],

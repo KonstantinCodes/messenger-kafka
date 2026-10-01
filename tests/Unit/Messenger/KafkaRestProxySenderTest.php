@@ -6,57 +6,49 @@ namespace Koco\Kafka\Tests\Unit\Messenger;
 
 use Koco\Kafka\Messenger\RestProxySender;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\Response;
 use Nyholm\Psr7\Uri;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Transport\Serialization\SerializerInterface;
 
 class KafkaRestProxySenderTest extends TestCase
 {
-    public function testBla()
+    /**
+     * @dataProvider provideSendCases
+     */
+    public function testSend(int $statusCode): void
     {
-        $client = new DummyClient();
-        $serializer = new DummySerializer();
+        $envelope = new Envelope(new TestMessage());
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->expects(self::once())->method('encode')->with($envelope)->willReturn([
+            'key' => base64_encode('event-123'),
+            'body' => base64_encode('hello'),
+            'headers' => ['Content-Type' => 'application/vnd.kafka.binary.v2+json'],
+        ]);
+        $client = $this->createMock(ClientInterface::class);
+        $client->expects(self::once())->method('sendRequest')->with(self::callback(static function (RequestInterface $request): bool {
+            self::assertSame('POST', $request->getMethod());
+            self::assertSame('https://example.com:8082/topics/events', (string) $request->getUri());
+            self::assertSame('application/vnd.kafka.v2+json', $request->getHeaderLine('Accept'));
+            self::assertSame('application/vnd.kafka.binary.v2+json', $request->getHeaderLine('Content-Type'));
+            self::assertSame([
+                'records' => [['key' => base64_encode('event-123'), 'value' => base64_encode('hello')]],
+            ], json_decode((string) $request->getBody(), true, 512, JSON_THROW_ON_ERROR));
 
+            return true;
+        }))->willReturn(new Response($statusCode));
         $psr17Factory = new Psr17Factory();
+        $sender = new RestProxySender(new Uri('https://example.com:8082'), 'events', $serializer, $client, $psr17Factory, $psr17Factory, $psr17Factory);
 
-        $sender = new RestProxySender(
-            new Uri('http://example.com'),
-            'test',
-            $serializer,
-            $client,
-            $psr17Factory,
-            $psr17Factory,
-            $psr17Factory
-        );
-
-        //$sender->send()
-
-        static::assertTrue(true);
-    }
-}
-
-class DummyClient implements ClientInterface
-{
-    public function sendRequest(RequestInterface $request): ResponseInterface
-    {
-        echo 'hallo';
-        // TODO: Implement sendRequest() method.
-    }
-}
-
-class DummySerializer implements SerializerInterface
-{
-    public function decode(array $encodedEnvelope): Envelope
-    {
-        // TODO: Implement decode() method.
+        self::assertSame($envelope, $sender->send($envelope));
     }
 
-    public function encode(Envelope $envelope): array
+    public static function provideSendCases(): iterable
     {
-        // TODO: Implement encode() method.
+        yield 'OK' => [200];
+        yield 'no content' => [204];
     }
 }
